@@ -1,0 +1,12 @@
+name_for_human: ""
+name_for_model: ""
+description_for_human: ""
+description_for_model: ""
+api.type: ""
+api.url: ""
+logo_url: ""
+contact_email: ""
+legal_info_url: ""
+auth:
+  auth.authorization_type: ""
+  auth.type: ""
