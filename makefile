@@ -33,6 +33,9 @@ GOFLAGS := -ldflags="-s -w"
 build:
 	$(GO) build $(GOFLAGS) -o mycli
 
+build-windows:
+	$(GO) build $(GOFLAGS) -o mycli.exe
+
 # Clean target
 clean:
 	rm -f mycli
