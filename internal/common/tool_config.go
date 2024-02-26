@@ -2,9 +2,9 @@ package common // Adjust the package name based on your actual package structure
 
 import "fmt" // ToolConfig represents the configuration structure for a tool
 type ToolConfig struct {
-	NameForHuman        string `json:"name_for_human" yaml:"name_for_human"`
+	NameForHuman        string `json:"name" yaml:"name"`
 	NameForAI           string `json:"name_for_ai" yaml:"name_for_model"` // Adjust based on your structure
-	DescriptionForHuman string `json:"description_for_human" yaml:"description_for_human"`
+	DescriptionForHuman string `json:"description" yaml:"description"`
 	DescriptionForAI    string `json:"description_for_ai" yaml:"description_for_model"` // Adjust based on your structure
 	APIType             string `json:"api_type" yaml:"api.type"`
 	APIURL              string `json:"api_url" yaml:"api.url"`
