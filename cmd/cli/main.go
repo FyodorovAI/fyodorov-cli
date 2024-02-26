@@ -27,7 +27,7 @@ func main() {
 	)
 
 	var rootCmd = &cobra.Command{
-		Use:   "fyodorov",
+		Use:   "fyodorov [validate|deploy] file",
 		Short: "Fyodorov CLI tool",
 	}
 
@@ -39,10 +39,15 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "Password for authentication")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		var err error
 		// Load from config if flags are not provided
 		configPath := filepath.Join(os.Getenv("HOME"), ".fyodorov", "config.json")
 		if (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
-			config.LoadConfig(configPath)
+			config, err = common.LoadConfig[common.Config](configPath)
+			if err != nil {
+				fmt.Println("Error loading config:", err)
+				return
+			}
 
 			if gagarinURL == "" {
 				gagarinURL = config.GagarinURL
@@ -112,7 +117,7 @@ func main() {
 		client := api.NewAPIClient(config, "")
 
 		// Authenticate if necessary
-		err := client.Authenticate()
+		err = client.Authenticate()
 		if err != nil {
 			fmt.Println("Error authenticating:", err)
 			return
@@ -125,10 +130,16 @@ func main() {
 		}
 
 		// Save the configuration
-		config.SaveConfig(configPath)
+		err = common.SaveConfig[common.Config](config, configPath)
+		if err != nil {
+			fmt.Println("Error saving config:", err)
+			return
+		}
 	}
 
-	rootCmd.AddCommand(cmdAgent, cmdTool)
+	rootCmd.AddCommand(copilotCmd)
+	rootCmd.AddCommand(validateTemplateCmd)
+	rootCmd.AddCommand(deployTemplateCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

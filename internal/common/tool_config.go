@@ -1,6 +1,6 @@
 package common // Adjust the package name based on your actual package structure
 
-import "fmt" // ToolConfig represents the configuration structure for a tool
+// ToolConfig represents the configuration structure for a tool
 type ToolConfig struct {
 	NameForHuman        string `json:"name" yaml:"name"`
 	NameForAI           string `json:"name_for_ai" yaml:"name_for_model"` // Adjust based on your structure
@@ -16,23 +16,4 @@ type ToolConfig struct {
 		AuthorizationType string `json:"authorization_type" yaml:"auth.authorization_type"`
 		Type              string `json:"type" yaml:"auth.type"`
 	} `json:"auth" yaml:"auth"`
-}
-
-// LoadToolConfig loads tool configuration from a file.
-// The format is determined by the file extension: .json or .yaml
-func LoadToolConfig(filename string) (*ToolConfig, error) {
-	config, err := LoadConfig[ToolConfig](filename)
-	if err != nil {
-		fmt.Printf("Error loading tool config from file %s: %v\n", filename, err)
-		return nil, err
-	}
-
-	return config, nil
-}
-
-// The format is determined by the file extension: .json or .yaml
-func (config *ToolConfig) SaveToFile(filename string) error {
-	SaveConfig[ToolConfig](config, filename)
-
-	return nil
 }
