@@ -20,7 +20,7 @@ func init() {
 	rootCmd.AddCommand(copilotCmd)
 	rootCmd.AddCommand(validateTemplateCmd)
 	deployTemplateCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Dry run")
-	deployTemplateCmd.Flags().StringSliceVar(&values, "values", []string{}, "List of key=value pairs (e.g. --values key1=value1,key2=value2)")
+	deployTemplateCmd.Flags().StringSliceVar(&values, "set", []string{}, "List of key=value pairs (e.g. --set key1=value1,key2=value2)")
 	rootCmd.AddCommand(deployTemplateCmd)
 }
 
@@ -85,6 +85,7 @@ var deployTemplateCmd = &cobra.Command{
 		if len(values) > 0 {
 			FyodorovConfig.ParseKeyValuePairs(values)
 			// @TODO debug this case: `fyodorov deploy --dry-run test_config.yaml --values "tools[0].name=daniel tools[0].api.type=daniel"`
+			fmt.Printf("Values: %v\n", values)
 		}
 		// print fyodorov config to stdout
 		if dryRun {
