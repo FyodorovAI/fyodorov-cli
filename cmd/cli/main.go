@@ -12,7 +12,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var config *common.Config
+var (
+	config  *common.Config
+	rootCmd = &cobra.Command{
+		Use:   "fyodorov [validate|deploy] file",
+		Short: "Fyodorov CLI tool",
+	}
+)
 
 func main() {
 	config = &common.Config{}
@@ -25,11 +31,6 @@ func main() {
 		email          string
 		password       string
 	)
-
-	var rootCmd = &cobra.Command{
-		Use:   "fyodorov [validate|deploy] file",
-		Short: "Fyodorov CLI tool",
-	}
 
 	// Define global flags
 	rootCmd.PersistentFlags().StringVarP(&gagarinURL, "gagarin-url", "b", "", "Base URL for 'Gagarin'")
@@ -137,9 +138,6 @@ func main() {
 		}
 	}
 
-	rootCmd.AddCommand(copilotCmd)
-	rootCmd.AddCommand(validateTemplateCmd)
-	rootCmd.AddCommand(deployTemplateCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

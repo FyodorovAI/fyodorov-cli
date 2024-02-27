@@ -55,7 +55,7 @@ func (c *APIClient) Authenticate() error {
 		return err
 	}
 
-	fmt.Println(response.Message)
+	// fmt.Println(response.Message)
 	c.AuthToken = response.JWT
 	return nil
 }

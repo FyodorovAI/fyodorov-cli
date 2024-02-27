@@ -11,6 +11,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	dryRun bool
+	values []string
+)
+
+func init() {
+	rootCmd.AddCommand(copilotCmd)
+	rootCmd.AddCommand(validateTemplateCmd)
+	deployTemplateCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Dry run")
+	deployTemplateCmd.Flags().StringSliceVar(&values, "values", []string{}, "List of key=value pairs (e.g. --values key1=value1,key2=value2)")
+	rootCmd.AddCommand(deployTemplateCmd)
+}
+
 // Fyodorov commands
 var copilotCmd = &cobra.Command{
 	Use:   "copilot",
@@ -68,8 +81,23 @@ var deployTemplateCmd = &cobra.Command{
 			fmt.Printf("Error loading fyodorov config from file %s: %v\n", args[0], err)
 			return
 		}
+		// load fyodorov config from values
+		if len(values) > 0 {
+			FyodorovConfig.ParseKeyValuePairs(values)
+			// @TODO debug this case: `fyodorov deploy --dry-run test_config.yaml --values "tools[0].name=daniel tools[0].api.type=daniel"`
+		}
+		// print fyodorov config to stdout
+		if dryRun {
+			bytes, err := yaml.Marshal(FyodorovConfig)
+			if err != nil {
+				fmt.Printf("Error marshaling fyodorov config to yaml: %v\n", err)
+				return
+			}
+			fmt.Printf("---Fyodorov config---\n%s\n", string(bytes))
+			return
+		}
 		// deploy tools
-		if FyodorovConfig.Tools != nil && len(*FyodorovConfig.Tools) > 0 {
+		if !dryRun && FyodorovConfig.Tools != nil && len(*FyodorovConfig.Tools) > 0 {
 			yamlBytes, err := yaml.Marshal(FyodorovConfig.Tools)
 			if err != nil {
 				fmt.Printf("Error marshaling fyodorov tools to yaml: %v\n", err)
@@ -96,7 +124,7 @@ var deployTemplateCmd = &cobra.Command{
 		}
 
 		// deploy agents
-		if FyodorovConfig.Agents != nil && len(*FyodorovConfig.Agents) > 0 {
+		if !dryRun && FyodorovConfig.Agents != nil && len(*FyodorovConfig.Agents) > 0 {
 			yamlBytes, err := yaml.Marshal(FyodorovConfig.Agents)
 			if err != nil {
 				fmt.Printf("Error marshaling agents to yaml: %v\n", err)
