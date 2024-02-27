@@ -84,8 +84,6 @@ var deployTemplateCmd = &cobra.Command{
 		// load fyodorov config from values
 		if len(values) > 0 {
 			FyodorovConfig.ParseKeyValuePairs(values)
-			// @TODO debug this case: `fyodorov deploy --dry-run test_config.yaml --values "tools[0].name=daniel tools[0].api.type=daniel"`
-			fmt.Printf("Values: %v\n", values)
 		}
 		// print fyodorov config to stdout
 		if dryRun {
