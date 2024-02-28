@@ -121,8 +121,6 @@ func (config *FyodorovConfig) parseAgentKey(key []string, value string) {
 		return
 	}
 	switch key[1] {
-	case "provider_id":
-		(*config.Agents)[index].ProviderID = value
 	case "model":
 		(*config.Agents)[index].Model = value
 	case "name":
@@ -131,8 +129,6 @@ func (config *FyodorovConfig) parseAgentKey(key []string, value string) {
 		(*config.Agents)[index].DescriptionForHuman = value
 	case "prompt":
 		(*config.Agents)[index].Prompt = value
-	case "prompt_size":
-		(*config.Agents)[index].PromptSize, _ = strconv.Atoi(value)
 	case "tools":
 		(*config.Agents)[index].Tools = strings.Split(value, ",")
 	case "rag":
