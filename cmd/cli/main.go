@@ -33,11 +33,10 @@ func main() {
 	)
 
 	// Define global flags
-	rootCmd.PersistentFlags().StringVarP(&gagarinURL, "gagarin-url", "b", "", "Base URL for 'Gagarin'")
-	rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "Base URL for 'Tsiolkovsky'")
-	rootCmd.PersistentFlags().StringVarP(&dostoyevskyURL, "dostoyevsky-url", "d", "", "Base URL for 'Dostoyevsky'")
-	rootCmd.PersistentFlags().StringVarP(&email, "email", "u", "", "Email for authentication")
-	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "Password for authentication")
+	rootCmd.PersistentFlags().StringVarP(&gagarinURL, "gagarin-url", "b", "", "base URL for 'Gagarin'")
+	rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "base URL for 'Tsiolkovsky'")
+	rootCmd.PersistentFlags().StringVarP(&email, "email", "u", "", "email for authentication")
+	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password for authentication")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		var err error
