@@ -2,7 +2,7 @@ package common
 
 import "fmt"
 
-type AgentConfig struct {
+type Agent struct {
 	Model               string   `json:"model" yaml:"model"`
 	NameForHuman        string   `json:"name" yaml:"name"`
 	DescriptionForHuman string   `json:"description" yaml:"description"`
@@ -11,7 +11,7 @@ type AgentConfig struct {
 	Rag                 []string `json:"rag" yaml:"rag"`
 }
 
-func (c *AgentConfig) Validate() error {
+func (c *Agent) Validate() error {
 	if c.Model == "" {
 		return fmt.Errorf("model is required")
 	}

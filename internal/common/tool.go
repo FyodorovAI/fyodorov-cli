@@ -1,7 +1,7 @@
-package common // Adjust the package name based on your actual package structure
+package common
 
-// ToolConfig represents the configuration structure for a tool
-type ToolConfig struct {
+// Tool represents the configuration structure for a tool
+type Tool struct {
 	NameForHuman        string `json:"name" yaml:"name"`
 	NameForAI           string `json:"name_for_ai" yaml:"name_for_ai"`
 	DescriptionForHuman string `json:"description" yaml:"description"`

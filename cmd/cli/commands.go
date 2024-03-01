@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api"
+	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api"
+	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/spf13/cobra"
 )

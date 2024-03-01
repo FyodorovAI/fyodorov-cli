@@ -9,6 +9,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ConfigLoader is an interface for loading configuration from a file.
+type BaseConfig interface {
+	Validate() error
+}
+
 // Generic function to load configuration from a file.
 // The format is determined by the file extension: .json or .yaml
 func LoadConfig[T any](filename string) (*T, error) {

@@ -31,6 +31,10 @@ func (config *FyodorovConfig) parseKey(key, value string) {
 		case "version":
 			config.Version = value
 			fmt.Print("Using fyodorov version: ", config.Version, "\n")
+		case "providers":
+			config.parseProviderKey(remainingKeys, value)
+		case "models":
+			config.parseModelKey(remainingKeys, value)
 		case "agents":
 			config.parseAgentKey(remainingKeys, value)
 		case "tools":
@@ -54,12 +58,103 @@ func parseComplexKey(keys []string) (firstKey string, remainingKeys []string) {
 	return firstKey, remainingKeys
 }
 
+func (config *FyodorovConfig) parseProviderKey(key []string, value string) {
+	if len(key) == 0 {
+		return
+	}
+	if config.Providers == nil {
+		config.Providers = &[]Provider{}
+	}
+	index := parseIndex(key[0])
+	if index >= len(*config.Providers) {
+		fmt.Printf("Invalid index: %d\n", index)
+		return
+	}
+	if len(key) == 1 {
+		return
+	}
+	switch key[1] {
+	case "name":
+		(*config.Providers)[index].Name = value
+	case "url":
+		(*config.Providers)[index].URL = value
+	case "api_key":
+		(*config.Providers)[index].APIKey = value
+	default:
+		fmt.Printf("Unknown key: %s\n", key[1])
+	}
+}
+
+func (config *FyodorovConfig) parseModelKey(key []string, value string) {
+	if len(key) == 0 {
+		return
+	}
+	if config.Models == nil {
+		config.Models = &[]Model{}
+	}
+	index := parseIndex(key[0])
+	if index >= len(*config.Models) {
+		fmt.Printf("Invalid index: %d\n", index)
+		return
+	}
+	if len(key) == 1 {
+		return
+	}
+	switch key[1] {
+	case "name":
+		(*config.Models)[index].Name = value
+	case "provider":
+		(*config.Models)[index].Provider = value
+	case "params":
+		(*config.Models)[index].Params = value
+	case "model_info":
+		(*config.Models)[index].parseModelInfo(key[2:], value)
+	default:
+		fmt.Printf("Unknown key: %s\n", key[1])
+	}
+}
+
+func (config *ModelConfig) parseModelInfo(key []string, value string) {
+	if len(key) == 0 {
+		return
+	}
+	switch key[1] {
+	case "mode":
+		config.ModelInfo.Mode = value
+	case "input_cost_per_token":
+		inputCostPerToken, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			fmt.Printf("Invalid input cost per token: %s\n", value)
+			return
+		}
+		config.ModelInfo.InputCostPerToken = &inputCostPerToken
+	case "output_cost_per_token":
+		outputCostPerToken, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			fmt.Printf("Invalid output cost per token: %s\n", value)
+			return
+		}
+		config.ModelInfo.OutputCostPerToken = &outputCostPerToken
+	case "max_tokens":
+		maxTokens, err := strconv.Atoi(value)
+		if err != nil {
+			fmt.Printf("Invalid max tokens: %s\n", value)
+			return
+		}
+		config.ModelInfo.MaxTokens = &maxTokens
+	case "base_model":
+		config.ModelInfo.BaseModel = value
+	default:
+		fmt.Printf("Unknown key: %s\n", key[1])
+	}
+}
+
 func (config *FyodorovConfig) parseToolKey(key []string, value string) {
 	if len(key) == 0 {
 		return
 	}
 	if config.Tools == nil {
-		config.Tools = &[]ToolConfig{}
+		config.Tools = &[]Tool{}
 	}
 	index := parseIndex(key[0])
 	if index >= len(*config.Tools) {
@@ -110,7 +205,7 @@ func (config *FyodorovConfig) parseAgentKey(key []string, value string) {
 		return
 	}
 	if config.Agents == nil {
-		config.Agents = &[]AgentConfig{}
+		config.Agents = &[]Agent{}
 	}
 	index := parseIndex(key[0])
 	if index >= len(*config.Agents) {
