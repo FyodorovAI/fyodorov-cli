@@ -14,7 +14,6 @@ import (
 func LoadConfig[T any](filename string) (*T, error) {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		fmt.Printf("Error loading config from file %s: %v\n", filename, err)
 		return nil, err
 	}
 

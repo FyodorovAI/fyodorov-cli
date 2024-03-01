@@ -22,9 +22,20 @@ func init() {
 	deployTemplateCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Dry run")
 	deployTemplateCmd.Flags().StringSliceVar(&values, "set", []string{}, "List of key=value pairs (e.g. --set key1=value1,key2=value2)")
 	rootCmd.AddCommand(deployTemplateCmd)
+	rootCmd.AddCommand(configCmd)
 }
 
 // Fyodorov commands
+var configCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Manage Fyodorov configuration",
+	Run: func(cmd *cobra.Command, args []string) {
+		configRun = true
+		initConfig(cmd, args)
+		configRun = false
+	},
+}
+
 var copilotCmd = &cobra.Command{
 	Use:   "copilot",
 	Short: "Ask for help working with Fyodorov",
