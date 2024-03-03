@@ -90,7 +90,7 @@ func (config *FyodorovConfig) parseModelKey(key []string, value string) {
 		return
 	}
 	if config.Models == nil {
-		config.Models = &[]Model{}
+		config.Models = &[]ModelConfig{}
 	}
 	index := parseIndex(key[0])
 	if index >= len(*config.Models) {
