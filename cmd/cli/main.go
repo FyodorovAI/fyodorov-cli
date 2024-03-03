@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	config  *common.Config
-	rootCmd = &cobra.Command{
+	config     *common.Config
+	configPath = filepath.Join(os.Getenv("HOME"), ".fyodorov", "config.json")
+	rootCmd    = &cobra.Command{
 		Use:   "fyodorov [validate|deploy] file",
 		Short: "Fyodorov CLI tool",
 	}
@@ -50,7 +51,6 @@ func main() {
 func initConfig(cmd *cobra.Command, args []string) {
 	var err error
 	// Load from config if flags are not provided
-	configPath := filepath.Join(os.Getenv("HOME"), ".fyodorov", "config.json")
 	if !configRun && (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
 		config, err = common.LoadConfig[common.Config](configPath)
 		if err != nil {

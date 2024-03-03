@@ -7,7 +7,7 @@ import (
 
 type Provider struct {
 	Name   string `json:"name" yaml:"name"`
-	URL    string `json:"url" yaml:"url"`
+	URL    string `json:"api_url" yaml:"api_url"`
 	APIKey string `json:"api_key" yaml:"api_key"`
 }
 

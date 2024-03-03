@@ -106,11 +106,21 @@ func (config *FyodorovConfig) parseModelKey(key []string, value string) {
 	case "provider":
 		(*config.Models)[index].Provider = value
 	case "params":
-		(*config.Models)[index].Params = value
+		(*config.Models)[index].parseModelParams(key[2:], value)
 	case "model_info":
 		(*config.Models)[index].parseModelInfo(key[2:], value)
 	default:
 		fmt.Printf("Unknown key: %s\n", key[1])
+	}
+}
+
+func (config *ModelConfig) parseModelParams(key []string, value string) {
+	if len(key) == 0 {
+		return
+	}
+	switch key[0] {
+	default:
+		fmt.Printf("Unknown key: %s\n\tvalue: %s\n", key[0], value)
 	}
 }
 

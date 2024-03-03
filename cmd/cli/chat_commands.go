@@ -38,8 +38,10 @@ var chatCmd = &cobra.Command{
 			fmt.Println("Unable to authenticate with this config")
 			initConfig(cmd, args)
 		}
+		agentName := "agent"
 		if len(args) > 0 {
-			agentName := args[0]
+			agentName = args[0]
 		}
+		fmt.Printf("Agent name: %s\n", agentName)
 	},
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -106,38 +108,11 @@ var deployTemplateCmd = &cobra.Command{
 			fmt.Printf("---Fyodorov config---\n%s\n", string(bytes))
 			return
 		}
-		// deploy tools
-		if !dryRun && FyodorovConfig.Tools != nil && len(*FyodorovConfig.Tools) > 0 {
-			yamlBytes, err := yaml.Marshal(FyodorovConfig.Tools)
+		// deploy config to Gagarin
+		if !dryRun {
+			yamlBytes, err := yaml.Marshal(FyodorovConfig)
 			if err != nil {
-				fmt.Printf("Error marshaling fyodorov tools to yaml: %v\n", err)
-				return
-			}
-			client := api.NewAPIClient(config, config.TsiolkovskyURL)
-			err = client.Authenticate()
-			if err != nil {
-				fmt.Println("Error authenticating:", err)
-				return
-			}
-			res, err := client.CallAPI("/tools/yaml", "POST", yamlBytes)
-			if err != nil {
-				fmt.Printf("Error deploying tools: %v\n", err)
-				return
-			}
-			defer res.Close()
-			body, err := io.ReadAll(res)
-			if err != nil {
-				fmt.Printf("Error reading response body while deploying tools: %v\n", err)
-				return
-			}
-			fmt.Printf("Deployed tools: %s\n", string(body))
-		}
-
-		// deploy agents
-		if !dryRun && FyodorovConfig.Agents != nil && len(*FyodorovConfig.Agents) > 0 {
-			yamlBytes, err := yaml.Marshal(FyodorovConfig.Agents)
-			if err != nil {
-				fmt.Printf("Error marshaling agents to yaml: %v\n", err)
+				fmt.Printf("Error marshaling config to yaml: %v\n", err)
 				return
 			}
 			client := api.NewAPIClient(config, config.GagarinURL)
@@ -146,18 +121,26 @@ var deployTemplateCmd = &cobra.Command{
 				fmt.Println("Error authenticating:", err)
 				return
 			}
-			res, err := client.CallAPI("/agents/from-yaml", "POST", yamlBytes)
+			var yamlBuffer bytes.Buffer
+			yamlBuffer.Write(yamlBytes)
+			res, err := client.CallAPI("POST", "/yaml", &yamlBuffer)
 			if err != nil {
-				fmt.Printf("Error deploying agents: %v\n", err)
+				fmt.Printf("Error deploying config: %v\n", err)
 				return
 			}
 			defer res.Close()
 			body, err := io.ReadAll(res)
 			if err != nil {
-				fmt.Printf("Error reading response body while deploying agents: %v\n", err)
+				fmt.Printf("Error reading response body while deploying config: %v\n", err)
 				return
 			}
-			fmt.Printf("Deployed agents: %s\n", string(body))
+			var prettyJSON bytes.Buffer
+			err = json.Indent(&prettyJSON, body, "", "\t")
+			if err != nil {
+				fmt.Printf("Error formatting JSON response: %v\n", err)
+				return
+			}
+			fmt.Printf("Deployed config:\n%s\n", prettyJSON.String())
 		}
 	},
 }

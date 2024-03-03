@@ -10,11 +10,13 @@ type ModelInfo struct {
 	BaseModel          string   `json:"base_model" yaml:"base_model"`
 }
 
+type Params struct{}
+
 type ModelConfig struct {
-	Name      string    `json:"name" yaml:"name"`
-	Provider  string    `json:"provider" yaml:"provider"`
-	Params    string    `json:"params" yaml:"params"`
-	ModelInfo ModelInfo `json:"model_info" yaml:"model_info"`
+	Name      string     `json:"name" yaml:"name"`
+	Provider  string     `json:"provider" yaml:"provider"`
+	Params    Params     `json:"params" yaml:"params"`
+	ModelInfo *ModelInfo `json:"model_info" yaml:"model_info"`
 }
 
 var MODEL_MODES = []string{"embedding", "chat", "multimodal"}

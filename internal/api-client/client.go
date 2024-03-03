@@ -22,9 +22,11 @@ func NewAPIClient(config *common.Config, baseURL string) *APIClient {
 	var host string
 	if config.DostoyevskyURL != "" {
 		host = config.DostoyevskyURL
-	} else if config.TsiolkovskyURL != "" {
+	}
+	if config.TsiolkovskyURL != "" {
 		host = config.TsiolkovskyURL
-	} else if config.GagarinURL != "" {
+	}
+	if config.GagarinURL != "" {
 		host = config.GagarinURL
 	}
 	if baseURL != "" {
@@ -40,7 +42,9 @@ func NewAPIClient(config *common.Config, baseURL string) *APIClient {
 // Authenticate method for API client
 func (c *APIClient) Authenticate() error {
 	// Implement authentication with the API to obtain AuthToken
-	responseBody, err := c.CallAPI("POST", "/users/sign_in", map[string]string{"email": c.Email, "password": c.Password})
+	body := bytes.NewBuffer([]byte{})
+	json.NewEncoder(body).Encode(map[string]string{"email": c.Email, "password": c.Password})
+	responseBody, err := c.CallAPI("POST", "/users/sign_in", body)
 	if err != nil {
 		return err
 	}
@@ -61,12 +65,8 @@ func (c *APIClient) Authenticate() error {
 }
 
 // CallAPI makes a generic API call. This can be expanded based on your needs.
-func (c *APIClient) CallAPI(method, endpoint string, body interface{}) (io.ReadCloser, error) {
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest(method, c.BaseURL+endpoint, bytes.NewBuffer(jsonBody))
+func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.ReadCloser, error) {
+	req, err := http.NewRequest(method, c.BaseURL+endpoint, body)
 	if err != nil {
 		return nil, err
 	}
