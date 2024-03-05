@@ -2,12 +2,16 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -38,10 +42,81 @@ var chatCmd = &cobra.Command{
 			fmt.Println("Unable to authenticate with this config")
 			initConfig(cmd, args)
 		}
-		agentName := "agent"
+		agentName := ""
 		if len(args) > 0 {
 			agentName = args[0]
+			args = args[1:]
+		}
+		var agent common.AgentClient
+		for _, agentTmp := range config.Agents {
+			if agentTmp.Name == agentName {
+				agent = agentTmp
+				break
+			}
+		}
+		if agent.Name == "" {
+			fmt.Println("Please provide an agent from this list:")
+			for _, agentTmp := range config.Agents {
+				fmt.Printf("%s (%d)\n", agentTmp.Name, agentTmp.ID)
+			}
+			return
+		}
+		instanceName := "Default Instance"
+		if len(args) > 0 {
+			instanceName = args[0]
+		}
+		if len(agent.Instances) == 0 {
+			fmt.Println("No instances found for that agent")
+			return
+		}
+		instance := agent.Instances[0]
+		for _, instanceTmp := range agent.Instances {
+			if instanceTmp.Title == instanceName {
+				instance = instanceTmp
+				break
+			}
 		}
 		fmt.Printf("Agent name: %s\n", agentName)
+		fmt.Printf("Instance name: %+v\n\n", instance.Title)
+		for {
+			fmt.Print("Enter input: ")
+			input, _ := reader.ReadString('\n')
+			req := ChatRequest{
+				Input: strings.TrimSpace(input),
+			}
+			jsonBytes, err := json.Marshal(req)
+			if err != nil {
+				fmt.Println("Error marshaling chat request to JSON:", err)
+				return
+			}
+			var jsonBuffer bytes.Buffer
+			jsonBuffer.Write(jsonBytes)
+			res, err := client.CallAPI("GET", "/instances/"+instance.ID+"/chat", &jsonBuffer)
+			if err != nil {
+				fmt.Printf("Error sending chat request: %v\n", err)
+				return
+			}
+			defer res.Close()
+			body, err := io.ReadAll(res)
+			if err != nil {
+				fmt.Printf("Error reading response body while sending chat request: %v\n", err)
+				return
+			}
+			var response ChatResponse
+			err = json.Unmarshal(body, &response)
+			if err != nil {
+				fmt.Printf("Error unmarshaling response body while sending chat request: %v\n", err)
+				return
+			}
+			fmt.Printf("%s: %s\n", agent.Name, color.GreenString(response.Answer))
+		}
 	},
+}
+
+type ChatRequest struct {
+	Input string `json:"input"`
+}
+
+type ChatResponse struct {
+	Answer string `json:"answer"`
 }

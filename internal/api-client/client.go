@@ -20,12 +20,12 @@ type APIClient struct {
 
 func NewAPIClient(config *common.Config, baseURL string) *APIClient {
 	var host string
-	if config.DostoyevskyURL != "" {
-		host = config.DostoyevskyURL
-	}
-	if config.TsiolkovskyURL != "" {
-		host = config.TsiolkovskyURL
-	}
+	// if config.DostoyevskyURL != "" {
+	// 	host = config.DostoyevskyURL
+	// }
+	// if config.TsiolkovskyURL != "" {
+	// 	host = config.TsiolkovskyURL
+	// }
 	if config.GagarinURL != "" {
 		host = config.GagarinURL
 	}
@@ -66,6 +66,10 @@ func (c *APIClient) Authenticate() error {
 
 // CallAPI makes a generic API call. This can be expanded based on your needs.
 func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.ReadCloser, error) {
+	// Check if first character of endpoint is '/' and if not add it
+	if endpoint[0] != '/' {
+		endpoint = "/" + endpoint
+	}
 	req, err := http.NewRequest(method, c.BaseURL+endpoint, body)
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
+	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +24,12 @@ var (
 
 // Define global flags
 var (
-	gagarinURL     string
-	tsiolkovskyURL string
-	dostoyevskyURL string
-	email          string
-	password       string
-	configRun      bool
+	gagarinURL string
+	// tsiolkovskyURL string
+	// dostoyevskyURL string
+	email     string
+	password  string
+	configRun bool
 )
 
 func main() {
@@ -36,7 +37,8 @@ func main() {
 
 	// Define global flags
 	rootCmd.PersistentFlags().StringVarP(&gagarinURL, "gagarin-url", "b", "", "base URL for 'Gagarin'")
-	rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "base URL for 'Tsiolkovsky'")
+	// rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "base URL for 'Tsiolkovsky'")
+	// rootCmd.PersistentFlags().StringVarP(&dostoyevskyURL, "dostoyevsky-url", "t", "", "base URL for 'Dostoyevsky'")
 	rootCmd.PersistentFlags().StringVarP(&email, "email", "u", "", "email for authentication")
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password for authentication")
 
@@ -51,7 +53,8 @@ func main() {
 func initConfig(cmd *cobra.Command, args []string) {
 	var err error
 	// Load from config if flags are not provided
-	if !configRun && (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
+	// if !configRun && (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
+	if !configRun && gagarinURL == "" || email == "" || password == "" {
 		config, err = common.LoadConfig[common.Config](configPath)
 		if err != nil {
 			fmt.Println("No config file found")
@@ -60,12 +63,12 @@ func initConfig(cmd *cobra.Command, args []string) {
 		if gagarinURL == "" && config != nil {
 			gagarinURL = config.GagarinURL
 		}
-		if tsiolkovskyURL == "" && config != nil {
-			tsiolkovskyURL = config.TsiolkovskyURL
-		}
-		if dostoyevskyURL == "" && config != nil {
-			dostoyevskyURL = config.DostoyevskyURL
-		}
+		// if tsiolkovskyURL == "" && config != nil {
+		// 	tsiolkovskyURL = config.TsiolkovskyURL
+		// }
+		// if dostoyevskyURL == "" && config != nil {
+		// 	dostoyevskyURL = config.DostoyevskyURL
+		// }
 		if email == "" && config != nil {
 			email = config.Email
 		}
@@ -86,24 +89,24 @@ func initConfig(cmd *cobra.Command, args []string) {
 			gagarinURL = defaultGagarinURL
 		}
 	}
-	if tsiolkovskyURL == "" {
-		defaultTsiolkovskyURL := strings.Replace(gagarinURL, "gagarin", "tsiolkovsky", -1)
-		fmt.Printf("Enter Tsiolkovsky URL (default: %s): ", defaultTsiolkovskyURL)
-		tsiolkovskyURL, _ = reader.ReadString('\n')
-		tsiolkovskyURL = strings.TrimSpace(tsiolkovskyURL)
-		if tsiolkovskyURL == "" {
-			tsiolkovskyURL = defaultTsiolkovskyURL
-		}
-	}
-	if dostoyevskyURL == "" {
-		defaultDostoyevskyURL := strings.Replace(tsiolkovskyURL, "gagarin", "dostoyevsky", -1)
-		fmt.Printf("Enter Dostoyevsky URL (default: %s): ", defaultDostoyevskyURL)
-		dostoyevskyURL, _ = reader.ReadString('\n')
-		dostoyevskyURL = strings.TrimSpace(dostoyevskyURL)
-		if dostoyevskyURL == "" {
-			dostoyevskyURL = defaultDostoyevskyURL
-		}
-	}
+	// if tsiolkovskyURL == "" {
+	// 	defaultTsiolkovskyURL := strings.Replace(gagarinURL, "gagarin", "tsiolkovsky", -1)
+	// 	fmt.Printf("Enter Tsiolkovsky URL (default: %s): ", defaultTsiolkovskyURL)
+	// 	tsiolkovskyURL, _ = reader.ReadString('\n')
+	// 	tsiolkovskyURL = strings.TrimSpace(tsiolkovskyURL)
+	// 	if tsiolkovskyURL == "" {
+	// 		tsiolkovskyURL = defaultTsiolkovskyURL
+	// 	}
+	// }
+	// if dostoyevskyURL == "" {
+	// 	defaultDostoyevskyURL := strings.Replace(tsiolkovskyURL, "gagarin", "dostoyevsky", -1)
+	// 	fmt.Printf("Enter Dostoyevsky URL (default: %s): ", defaultDostoyevskyURL)
+	// 	dostoyevskyURL, _ = reader.ReadString('\n')
+	// 	dostoyevskyURL = strings.TrimSpace(dostoyevskyURL)
+	// 	if dostoyevskyURL == "" {
+	// 		dostoyevskyURL = defaultDostoyevskyURL
+	// 	}
+	// }
 	if email == "" {
 		fmt.Print("Enter Email: ")
 		email, _ = reader.ReadString('\n')
@@ -111,16 +114,20 @@ func initConfig(cmd *cobra.Command, args []string) {
 	}
 	if password == "" {
 		fmt.Print("Enter Password: ")
-		password, _ = reader.ReadString('\n')
-		password = strings.TrimSpace(password)
+		passBytes, err := gopass.GetPasswdMasked()
+		if err != nil {
+			fmt.Println("Error getting password:", err)
+			return
+		}
+		password = strings.TrimSpace(string(passBytes))
 	}
 
 	if config == nil {
 		config = &common.Config{}
 	}
 	config.GagarinURL = gagarinURL
-	config.TsiolkovskyURL = tsiolkovskyURL
-	config.DostoyevskyURL = dostoyevskyURL
+	// config.TsiolkovskyURL = tsiolkovskyURL
+	// config.DostoyevskyURL = dostoyevskyURL
 	config.Email = email
 	config.Password = password
 
