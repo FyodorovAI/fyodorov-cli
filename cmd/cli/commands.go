@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(copilotCmd)
+	// rootCmd.AddCommand(copilotCmd)
 	rootCmd.AddCommand(validateTemplateCmd)
 	rootCmd.AddCommand(configCmd)
 }
