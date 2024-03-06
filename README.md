@@ -14,7 +14,8 @@ To start using the Fyodorov services, you must first sign up and authenticate. Y
 ./fyodorov auth
 ```
 
-You can use the hosted version at [https://gagarin.danielransom.com](https://gagarin.danielransom.com) to sign up and test your models.
+You can use the default hosted version at [https://gagarin.danielransom.com](https://gagarin.danielransom.com) 
+to sign up and test your models.
 
 You will need an invite code. If you weren't provided with one you can try this one: `GITHUB`
 
