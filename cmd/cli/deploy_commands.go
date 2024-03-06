@@ -78,7 +78,7 @@ var deployTemplateCmd = &cobra.Command{
 			var bodyResponse BodyResponse
 			err = json.Unmarshal(body, &bodyResponse)
 			if err != nil {
-				fmt.Printf("Error unmarshaling response body while deploying config: %v\n", err)
+				fmt.Printf("Error unmarshaling response body while deploying config: %s\n\t%v\n", string(body), err)
 				return
 			}
 			cliConfig, err := common.LoadConfig[common.Config](configPath)
@@ -87,6 +87,9 @@ var deployTemplateCmd = &cobra.Command{
 				return
 			}
 			for _, agent := range bodyResponse.Agents {
+				if checkIfAgentPresent(agent.ID, cliConfig.Agents) {
+					continue
+				}
 				cliConfig.Agents = append(cliConfig.Agents, common.AgentClient{
 					ID:        agent.ID,
 					Name:      agent.NameForHuman,
@@ -98,6 +101,15 @@ var deployTemplateCmd = &cobra.Command{
 			fmt.Println("Deployed config")
 		}
 	},
+}
+
+func checkIfAgentPresent(agentID int, agents []common.AgentClient) bool {
+	for _, agent := range agents {
+		if agent.ID == agentID {
+			return true
+		}
+	}
+	return false
 }
 
 func getInstanceForAgent(agentID int, instances []InstanceResponse) []common.InstanceClient {

@@ -3,20 +3,20 @@ package common
 import "fmt"
 
 type ModelInfo struct {
-	Mode               string   `json:"mode" yaml:"mode"`
-	InputCostPerToken  *float64 `json:"input_cost_per_token" yaml:"input_cost_per_token"`
-	OutputCostPerToken *float64 `json:"output_cost_per_token" yaml:"output_cost_per_token"`
-	MaxTokens          *int     `json:"max_tokens" yaml:"max_tokens"`
-	BaseModel          string   `json:"base_model" yaml:"base_model"`
+	Mode               string   `json:"mode" yaml:"mode,omitempty"`
+	InputCostPerToken  *float64 `json:"input_cost_per_token" yaml:"input_cost_per_token,omitempty"`
+	OutputCostPerToken *float64 `json:"output_cost_per_token" yaml:"output_cost_per_token,omitempty"`
+	MaxTokens          *int     `json:"max_tokens" yaml:"max_tokens,omitempty"`
+	BaseModel          string   `json:"base_model" yaml:"base_model,omitempty"`
 }
 
 type Params struct{}
 
 type ModelConfig struct {
-	Name      string     `json:"name" yaml:"name"`
-	Provider  string     `json:"provider" yaml:"provider"`
-	Params    Params     `json:"params" yaml:"params"`
-	ModelInfo *ModelInfo `json:"model_info" yaml:"model_info"`
+	Name      string     `json:"name" yaml:"name,omitempty"`
+	Provider  string     `json:"provider" yaml:"provider,omitempty"`
+	Params    Params     `json:"params" yaml:"params,omitempty"`
+	ModelInfo *ModelInfo `json:"model_info" yaml:"model_info,omitempty"`
 }
 
 var MODEL_MODES = []string{"embedding", "chat", "multimodal"}

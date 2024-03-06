@@ -3,12 +3,12 @@ package common
 import "fmt"
 
 type Agent struct {
-	Model               string   `json:"model" yaml:"model"`
-	NameForHuman        string   `json:"name" yaml:"name"`
-	DescriptionForHuman string   `json:"description" yaml:"description"`
-	Prompt              string   `json:"prompt" yaml:"prompt"`
-	Tools               []string `json:"tools" yaml:"tools"`
-	Rag                 []string `json:"rag" yaml:"rag"`
+	Model               string   `json:"model" yaml:"model,omitempty"`
+	NameForHuman        string   `json:"name" yaml:"name,omitempty"`
+	DescriptionForHuman string   `json:"description" yaml:"description,omitempty"`
+	Prompt              string   `json:"prompt" yaml:"prompt,omitempty"`
+	Tools               []string `json:"tools" yaml:"tools,omitempty"`
+	Rag                 []string `json:"rag" yaml:"rag,omitempty"`
 }
 
 func (c *Agent) Validate() error {

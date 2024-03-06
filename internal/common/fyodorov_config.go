@@ -3,7 +3,7 @@ package common
 var DEFAULT_VERSION = "0.0.1"
 
 type FyodorovConfig struct {
-	Version   string         `json:"version" yaml:"version"`
+	Version   string         `json:"version" yaml:"version,omitempty"`
 	Providers *[]Provider    `json:"providers,omitempty" yaml:"providers,omitempty"`
 	Models    *[]ModelConfig `json:"models,omitempty" yaml:"models,omitempty"`
 	Agents    *[]Agent       `json:"agents,omitempty" yaml:"agents,omitempty"`

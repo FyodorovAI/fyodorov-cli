@@ -76,8 +76,8 @@ var chatCmd = &cobra.Command{
 				break
 			}
 		}
-		fmt.Printf("Agent name: %s\n", agentName)
-		fmt.Printf("Instance name: %+v\n\n", instance.Title)
+		fmt.Printf("Agent name (%+v): %s\n", agent.ID, agent.Name)
+		fmt.Printf("Instance name (%+v): %+v\n\n", instance.ID, instance.Title)
 		for {
 			fmt.Print("Enter input: ")
 			input, _ := reader.ReadString('\n')
