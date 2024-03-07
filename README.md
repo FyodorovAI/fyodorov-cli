@@ -1,6 +1,6 @@
 # Fyodorov CLI Tool
 
-The Fyodorov CLI tool is designed to streamline your interaction with Fyodorov services, including authentication, and deployment. Below are the instructions to get started with signing up and deploying your configuration. You can also follow a demo in [this youtube video](https://www.youtube.com/watch?v=XjqWd81iJK0)
+The Fyodorov CLI tool is designed to streamline your interaction with Fyodorov services, including authentication, and deployment. Below are the instructions to get started with signing up and deploying your configuration. You can also follow a demo in [this youtube video](https://www.youtube.com/watch?v=XjqWd81iJK0).
 
 ## Installation
 
