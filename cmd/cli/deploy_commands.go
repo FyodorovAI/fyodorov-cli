@@ -81,7 +81,7 @@ var deployTemplateCmd = &cobra.Command{
 				fmt.Printf("Error unmarshaling response body while deploying config: %s\n\t%v\n", string(body), err)
 				return
 			}
-			cliConfig, err := common.LoadConfig[common.Config](configPath)
+			cliConfig, err := common.LoadConfig[common.Config](common.GetConfigPath())
 			if err != nil {
 				fmt.Printf("Error loading config: %v\n", err)
 				return
@@ -96,7 +96,7 @@ var deployTemplateCmd = &cobra.Command{
 					Instances: getInstanceForAgent(agent.ID, bodyResponse.Instances),
 				})
 			}
-			common.SaveConfig[common.Config](cliConfig, configPath)
+			common.SaveConfig[common.Config](cliConfig, common.GetConfigPath())
 			// Print deployed config
 			fmt.Println("Deployed config")
 		}

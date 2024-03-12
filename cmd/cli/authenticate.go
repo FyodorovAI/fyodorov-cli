@@ -31,7 +31,7 @@ var authCmd = &cobra.Command{
 	Short: "Fyodorov authentication: sign up, log in, etc.",
 	Run: func(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
-		config, err := common.LoadConfig[common.Config](configPath)
+		config, err := common.LoadConfig[common.Config](common.GetConfigPath())
 		if err != nil || config == nil || config.GagarinURL == "" {
 			fmt.Printf("Enter Gagarin URL (default: %s): ", defaultGagarinURL)
 			input, _ := reader.ReadString('\n')
@@ -85,7 +85,7 @@ var authCmd = &cobra.Command{
 				// fmt.Println(string(body))
 				config.Email = req.Email
 				config.Password = req.Password
-				err = common.SaveConfig[common.Config](config, configPath)
+				err = common.SaveConfig[common.Config](config, common.GetConfigPath())
 				if err != nil {
 					fmt.Println("Error saving config:", err)
 					return
@@ -107,7 +107,7 @@ var authCmd = &cobra.Command{
 					fmt.Println("Error authenticating:", err)
 					return
 				}
-				err = common.SaveConfig[common.Config](config, configPath)
+				err = common.SaveConfig[common.Config](config, common.GetConfigPath())
 				if err != nil {
 					fmt.Println("Error saving config:", err)
 					return

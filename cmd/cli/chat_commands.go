@@ -25,7 +25,7 @@ var chatCmd = &cobra.Command{
 	Short: "Manage Fyodorov configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
-		config, err := common.LoadConfig[common.Config](configPath)
+		config, err := common.LoadConfig[common.Config](common.GetConfigPath())
 		if err != nil || config == nil || config.GagarinURL == "" {
 			fmt.Println("Enter Gagarin URL:")
 			input, _ := reader.ReadString('\n')
