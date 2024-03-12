@@ -5,3 +5,5 @@ toolbar:
 
 cli:
 	$(MAKE) -C cmd/cli build
+
+build: cli toolbar
