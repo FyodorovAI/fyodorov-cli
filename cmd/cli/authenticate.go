@@ -11,6 +11,7 @@ import (
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
+	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 )
 
@@ -32,26 +33,33 @@ var authCmd = &cobra.Command{
 		reader := bufio.NewReader(os.Stdin)
 		config, err := common.LoadConfig[common.Config](configPath)
 		if err != nil || config == nil || config.GagarinURL == "" {
-			fmt.Println("Enter Gagarin URL:")
+			fmt.Printf("Enter Gagarin URL (default: %s): ", defaultGagarinURL)
 			input, _ := reader.ReadString('\n')
 			gagarinURL = strings.TrimSpace(input)
+			if gagarinURL == "" {
+				gagarinURL = defaultGagarinURL
+			}
 			if config == nil {
 				config = &common.Config{}
 			}
 			config.GagarinURL = gagarinURL
-			fmt.Println("Do you have an account? (y/n)")
+			fmt.Print("Do you have an account? (y/n): ")
 			input, _ = reader.ReadString('\n')
-			if strings.TrimSpace(input) == "y" {
+			if strings.TrimSpace(input) == "n" {
 				req := signUpRequest{}
-				fmt.Println("Enter invite code:")
+				fmt.Print("Enter invite code: ")
 				input, _ = reader.ReadString('\n')
 				req.InviteCode = strings.TrimSpace(input)
-				fmt.Println("Enter email:")
+				fmt.Print("Enter email: ")
 				input, _ = reader.ReadString('\n')
 				req.Email = strings.TrimSpace(input)
-				fmt.Println("Enter password:")
-				input, _ = reader.ReadString('\n')
-				req.Password = strings.TrimSpace(input)
+				fmt.Print("Enter password: ")
+				passBytes, err := gopass.GetPasswdMasked()
+				if err != nil {
+					fmt.Println("Error reading password:", err)
+					return
+				}
+				req.Password = strings.TrimSpace(string(passBytes))
 				// marshal request to json
 				jsonBytes, err := json.Marshal(req)
 				if err != nil {
@@ -68,15 +76,37 @@ var authCmd = &cobra.Command{
 					return
 				}
 				defer res.Close()
-				body, err := io.ReadAll(res)
+				_, err = io.ReadAll(res)
 				if err != nil {
 					fmt.Printf("Error reading response body while signing up: %v\n", err)
 					return
 				}
-				fmt.Println("Signed up with response:")
-				fmt.Println(string(body))
+				fmt.Println("Signed up successfully!")
+				// fmt.Println(string(body))
 				config.Email = req.Email
 				config.Password = req.Password
+				err = common.SaveConfig[common.Config](config, configPath)
+				if err != nil {
+					fmt.Println("Error saving config:", err)
+					return
+				}
+			} else {
+				fmt.Print("Enter email: ")
+				input, _ = reader.ReadString('\n')
+				config.Email = strings.TrimSpace(input)
+				fmt.Print("Enter password: ")
+				passBytes, err := gopass.GetPasswdMasked()
+				if err != nil {
+					fmt.Println("Error reading password:", err)
+					return
+				}
+				config.Password = strings.TrimSpace(string(passBytes))
+				client := api.NewAPIClient(config, gagarinURL)
+				err = client.Authenticate()
+				if err != nil {
+					fmt.Println("Error authenticating:", err)
+					return
+				}
 				err = common.SaveConfig[common.Config](config, configPath)
 				if err != nil {
 					fmt.Println("Error saving config:", err)
@@ -91,5 +121,6 @@ var authCmd = &cobra.Command{
 			fmt.Println("Unable to authenticate with this config")
 			initConfig(cmd, args)
 		}
+		fmt.Println("Authenticated successfully!")
 	},
 }

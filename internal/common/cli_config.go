@@ -1,5 +1,10 @@
 package common
 
+import (
+	"os"
+	"path/filepath"
+)
+
 // Define a struct to hold the configuration
 type Config struct {
 	GagarinURL string `json:"gagarin_url"`
@@ -19,4 +24,24 @@ type AgentClient struct {
 type InstanceClient struct {
 	ID    string `json:"id"`
 	Title string `json:"name"`
+}
+
+func GetConfigPath() string {
+	platform := os.Getenv("GOOS")
+	switch platform {
+	case "windows":
+		return filepath.Join(GetPlatformBasePath(), "config.json")
+	default:
+		return filepath.Join(GetPlatformBasePath(), "config.json")
+	}
+}
+
+func GetPlatformBasePath() string {
+	platform := os.Getenv("GOOS")
+	switch platform {
+	case "windows":
+		return filepath.Join(os.Getenv("LOCALAPPDATA"), "fyodorov")
+	default:
+		return filepath.Join(os.Getenv("HOME"), ".fyodorov")
+	}
 }

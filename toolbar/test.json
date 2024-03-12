@@ -1,0 +1,15 @@
+{
+  "name": "gemma:2b",
+  "model": "gemma:2b",
+  "modified_at": "2024-03-11T00:41:20.00744648+01:00",
+  "size": 1678456656,
+  "digest": "b50d6c999e592ae4f79acae23b4feaefbdfceaa7cd366df2610e3072c052a160",
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "gemma",
+    "families": ["gemma"],
+    "parameter_size": "3B",
+    "quantization_level": "Q4_0"
+  }
+}

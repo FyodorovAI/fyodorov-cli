@@ -70,7 +70,8 @@ func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.Rea
 	if endpoint[0] != '/' {
 		endpoint = "/" + endpoint
 	}
-	req, err := http.NewRequest(method, c.BaseURL+endpoint, body)
+	url := c.BaseURL + endpoint
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.Rea
 
 	if resp.StatusCode >= 400 {
 		// Handle HTTP errors here
-		return nil, fmt.Errorf("API request error: %s", resp.Status)
+		return nil, fmt.Errorf("[%s] API request error: %s", url, resp.Status)
 	}
 
 	return resp.Body, nil

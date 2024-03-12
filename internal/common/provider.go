@@ -6,9 +6,9 @@ import (
 )
 
 type Provider struct {
-	Name   string `json:"name" yaml:"name,omitempty"`
+	Name   string `json:"name" yaml:"name"`
 	URL    string `json:"api_url" yaml:"api_url,omitempty"`
-	APIKey string `json:"api_key" yaml:"api_key,omitempty"`
+	APIKey string `json:"api_key" yaml:"api_key"`
 }
 
 func CreateProvider() *Provider {

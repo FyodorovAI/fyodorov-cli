@@ -14,9 +14,8 @@ import (
 )
 
 var (
-	config     *common.Config
-	configPath = filepath.Join(os.Getenv("HOME"), ".fyodorov", "config.json")
-	rootCmd    = &cobra.Command{
+	config  *common.Config
+	rootCmd = &cobra.Command{
 		Use:   "fyodorov [validate|deploy] file",
 		Short: "Fyodorov CLI tool",
 	}
@@ -27,9 +26,10 @@ var (
 	gagarinURL string
 	// tsiolkovskyURL string
 	// dostoyevskyURL string
-	email     string
-	password  string
-	configRun bool
+	email             string
+	password          string
+	configRun         bool
+	defaultGagarinURL = "https://gagarin.danielransom.com"
 )
 
 func main() {
@@ -51,11 +51,14 @@ func main() {
 }
 
 func initConfig(cmd *cobra.Command, args []string) {
+	if cmd.Use == "auth" {
+		return
+	}
 	var err error
 	// Load from config if flags are not provided
 	// if !configRun && (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
 	if !configRun && gagarinURL == "" || email == "" || password == "" {
-		config, err = common.LoadConfig[common.Config](configPath)
+		config, err = common.LoadConfig[common.Config](common.GetConfigPath())
 		if err != nil {
 			fmt.Println("No config file found")
 		}
@@ -80,7 +83,6 @@ func initConfig(cmd *cobra.Command, args []string) {
 	// If still missing, prompt the user
 	reader := bufio.NewReader(os.Stdin)
 	if gagarinURL == "" {
-		defaultGagarinURL := "https://gagarin.danielransom.com"
 		fmt.Printf("Enter Gagarin URL (default: %s): ", defaultGagarinURL)
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
@@ -142,13 +144,13 @@ func initConfig(cmd *cobra.Command, args []string) {
 	}
 
 	// Create config directory if it doesn't exist
-	dir := filepath.Dir(configPath)
+	dir := filepath.Dir(common.GetConfigPath())
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		os.MkdirAll(dir, 0755)
 	}
 
 	// Save the configuration
-	err = common.SaveConfig[common.Config](config, configPath)
+	err = common.SaveConfig[common.Config](config, common.GetConfigPath())
 	if err != nil {
 		fmt.Println("Error saving config:", err)
 		return
