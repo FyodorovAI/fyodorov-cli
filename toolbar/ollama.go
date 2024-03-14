@@ -65,7 +65,7 @@ func ollama() {
 		return
 	}
 	// Get API status of localhost ollama
-	url := fmt.Sprintf("http://localhost:%d/", ollamaPort)
+	url := fmt.Sprintf("http://localhost:%d", ollamaPort)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Error connecting to ollama: %v\n", err)
@@ -111,6 +111,7 @@ func (t *OllamaTag) GetModelConfig() common.ModelConfig {
 		Name:     t.Model,
 		Provider: "ollama",
 		ModelInfo: &common.ModelInfo{
+			BaseModel:          t.Model,
 			InputCostPerToken:  new(float64),
 			OutputCostPerToken: new(float64),
 		},
@@ -135,7 +136,7 @@ func UpdateProvider() {
 	defer resp.Body.Close()
 	provider := common.Provider{
 		Name:   "ollama",
-		URL:    "http://__IP__:11434",
+		URL:    "http://localhost:11434",
 		APIKey: "",
 	}
 	// marshall provider to *bytes.Buffer
