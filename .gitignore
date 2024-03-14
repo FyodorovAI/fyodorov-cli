@@ -61,3 +61,4 @@ Thumbs.db
 test_config*.yaml
 fyodorov-amd64
 toolbar/toolbar
+local_config.yaml
