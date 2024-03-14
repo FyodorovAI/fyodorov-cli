@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	version = "0.3.0"
+	version = "0.4.2"
 )
 
 func init() {
-	// rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(updateCmd)
 }
 
 // GitHubRelease represents the GitHub release structure for the latest release.
