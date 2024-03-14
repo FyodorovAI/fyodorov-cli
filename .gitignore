@@ -58,7 +58,6 @@ Thumbs.db
 .idea/
 *.swp
 *~
-test_config*.yaml
+*_config*.yaml
 fyodorov-amd64
 toolbar/toolbar
-local_config.yaml
