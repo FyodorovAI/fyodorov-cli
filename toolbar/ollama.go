@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func init() {
-	// router.GET("/terminal", TerminalHandler)
+	UpdateOllama()
 }
 
 var (
@@ -53,9 +52,9 @@ func UpdateOllama() {
 	for {
 		select {
 		case <-ticker.C:
-			if localModelsEnabled {
-				UpdateProvider()
-			}
+			ollama()
+		default:
+			time.Sleep(10 * time.Second)
 		}
 	}
 }
@@ -169,7 +168,7 @@ func UpdateProvider() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(body))
+	fmt.Println("Updated provider:", string(body))
 }
 
 func UpdateModel(model common.ModelConfig) {
@@ -180,42 +179,27 @@ func UpdateModel(model common.ModelConfig) {
 	client := api.NewAPIClient(config, config.GagarinURL)
 	err = client.Authenticate()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error authenticating during model update:", err)
 		return
 	}
 	// marshall model to *bytes.Buffer
 	modelBytes, err := json.Marshal(model)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error marshalling model update:", err)
 		return
 	}
 	var modelBuffer bytes.Buffer
 	modelBuffer.Write(modelBytes)
 	res, err := client.CallAPI("POST", "/models", &modelBuffer)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error updating model:", err)
 		return
 	}
 	defer res.Close()
 	body, err := io.ReadAll(res)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error reading model update response:", err)
 		return
 	}
-	fmt.Println(string(body))
-}
-
-func GetPublicIP() (string, error) {
-	resp, err := http.Get("https://api.ipify.org?format=text")
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	ip, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(ip), nil
+	fmt.Println("Updated model:", string(body))
 }
