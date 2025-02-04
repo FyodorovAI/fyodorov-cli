@@ -100,4 +100,6 @@ func enableLocalModels() {
 
 func onExit() {
 	// clean up here
+	fmt.Println("Exit")
+	os.Exit(0)
 }
