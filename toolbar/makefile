@@ -9,7 +9,7 @@ TARGET_WINDOWS := toolbar.exe
 
 # Build targets
 build-mac:
-	$(GO) build $(GOFLAGS) -o $(TARGET_MAC) .
+	export CC=/usr/bin/clang && $(GO) build $(GOFLAGS) -o $(TARGET_MAC) .
 
 build-windows:
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -o $(TARGET_WINDOWS) .

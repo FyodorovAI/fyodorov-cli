@@ -47,8 +47,12 @@ var authCmd = &cobra.Command{
 			input, _ = reader.ReadString('\n')
 			if strings.TrimSpace(input) == "n" {
 				req := signUpRequest{}
-				fmt.Print("Enter invite code: ")
+				fmt.Print("Enter invite code (default is empty): ")
 				input, _ = reader.ReadString('\n')
+				inviteCode := strings.TrimSpace(input)
+				if inviteCode != "" {
+					req.InviteCode = inviteCode
+				}
 				req.InviteCode = strings.TrimSpace(input)
 				fmt.Print("Enter email: ")
 				input, _ = reader.ReadString('\n')
@@ -81,7 +85,7 @@ var authCmd = &cobra.Command{
 					fmt.Printf("Error reading response body while signing up: %v\n", err)
 					return
 				}
-				fmt.Println("Signed up successfully!")
+				fmt.Printf("\033[0;32mSigned up successfully!\033[0m\n")
 				// fmt.Println(string(body))
 				config.Email = req.Email
 				config.Password = req.Password
@@ -104,12 +108,12 @@ var authCmd = &cobra.Command{
 				client := api.NewAPIClient(config, gagarinURL)
 				err = client.Authenticate()
 				if err != nil {
-					fmt.Println("Error authenticating:", err)
+					fmt.Printf("\033[0;31mError authenticating:\033[0m +%v\n", err.Error())
 					return
 				}
 				err = common.SaveConfig[common.Config](config, common.GetConfigPath())
 				if err != nil {
-					fmt.Println("Error saving config:", err)
+					fmt.Printf("\033[0;31mError saving config:\033[0m +%v\n", err.Error())
 					return
 				}
 			}
@@ -118,9 +122,10 @@ var authCmd = &cobra.Command{
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println("Unable to authenticate with this config")
+			fmt.Printf("\033[0;31mUnable to authenticate with this config\033[0m\n")
 			initConfig(cmd, args)
+			return
 		}
-		fmt.Println("Authenticated successfully!")
+		fmt.Printf("\033[0;32mAuthenticated successfully!\033[0m\n")
 	},
 }

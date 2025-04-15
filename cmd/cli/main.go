@@ -133,14 +133,38 @@ func initConfig(cmd *cobra.Command, args []string) {
 	config.Email = email
 	config.Password = password
 
+	// Print config
+	if cmd.Use == "config" && configRun {
+		fmt.Printf("--Config-------------------------------------\n")
+		fmt.Printf("Gagarin URL: %s\n", config.GagarinURL)
+		// fmt.Printf("Tsiolkovsky URL: %s\n", config.TsiolkovskyURL)
+		// fmt.Printf("Dostoyevsky URL: %s\n", config.DostoyevskyURL)
+		fmt.Printf("Email: %s\n", config.Email)
+		// Replace all but first and last letter with '*'
+		fmt.Printf(
+			"Password: %s\n\n",
+			strings.ReplaceAll(
+				config.Password,
+				config.Password[1:len(config.Password)-2],
+				strings.Repeat("*", len(config.Password)-3),
+			),
+		)
+	}
+
 	// Initialize API client
 	client := api.NewAPIClient(config, "")
-
 	// Authenticate if necessary
 	err = client.Authenticate()
-	if err != nil {
-		fmt.Println("Cannot authenticate:", err)
+	if err != nil && !configRun {
+		fmt.Printf("\033[0;31mError authenticating:\033[0m %v\n", err)
 		return
+	} else if err != nil {
+		fmt.Printf("\033[0;31mUnable to authenticate with this config\033[0m\n")
+		fmt.Printf("\033[0;31mPlease provide a valid config\033[0m\n")
+		fmt.Printf("Invalid config not saved\n")
+		return
+	} else if configRun {
+		fmt.Printf("\033[0;32mAuthenticated successfully!\033[0m\n")
 	}
 
 	// Create config directory if it doesn't exist

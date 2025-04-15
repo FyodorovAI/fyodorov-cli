@@ -15,6 +15,7 @@ var (
 )
 
 func main() {
+	fmt.Println("Starting toolbar...")
 	systray.Run(onReady, onExit)
 }
 
@@ -69,6 +70,8 @@ func authenticate() {
 		if err != nil {
 			fmt.Println("Error authenticating:", err)
 			return
+		} else {
+			fmt.Println("Authenticated successfully")
 		}
 	} else {
 		// download latest executable from github releases based platform
@@ -78,7 +81,7 @@ func authenticate() {
 			fmt.Printf("Error fetching latest release: %v\n", err)
 			os.Exit(1)
 		}
-
+		fmt.Println("Fetched latest release assets", assets) // temp log line
 		path, err := downloadAppropriateAsset(assets)
 		if err != nil {
 			fmt.Printf("Error downloading asset: %v\n", err)
@@ -94,12 +97,12 @@ func openSettings() {
 }
 
 func enableLocalModels() {
-	fmt.Println("local models checked: ", localModelsEnabled)
+	fmt.Println("local models checked:", localModelsEnabled)
 	ollama()
 }
 
 func onExit() {
 	// clean up here
-	fmt.Println("Exit")
+	fmt.Println("Exiting...")
 	os.Exit(0)
 }

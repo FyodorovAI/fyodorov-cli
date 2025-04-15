@@ -55,7 +55,11 @@ var chatCmd = &cobra.Command{
 			}
 		}
 		if agent.Name == "" {
-			fmt.Println("Please provide an agent from this list:")
+			if len(config.Agents) == 0 {
+				fmt.Printf("No agents found in the config.\n ")
+				return
+			}
+			fmt.Println("Please provide an agent from this list as the first argument:")
 			for _, agentTmp := range config.Agents {
 				fmt.Printf("%s (%d)\n", agentTmp.Name, agentTmp.ID)
 			}
