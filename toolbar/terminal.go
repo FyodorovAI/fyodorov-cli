@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 )
@@ -24,7 +25,17 @@ func openTerminalWithCommand(command string) error {
 		cmd = exec.Command("xterm", "-e", command)
 	case "darwin":
 		// For macOS, use 'osascript' to run an AppleScript command that opens Terminal.
-		cmd = exec.Command("osascript", "-e", "tell application \"Terminal\"", "-e", "activate", "-e", "do script \""+command+"\"", "-e", "end tell")
+		cmd = exec.Command(
+			"osascript",
+			"-e",
+			"tell application \"Terminal\"",
+			"-e",
+			"activate",
+			"-e",
+			"do script \""+command+"\"",
+			"-e",
+			"end tell",
+		)
 	default:
 		return fmt.Errorf("unsupported platform")
 	}
@@ -85,7 +96,7 @@ func downloadAppropriateAsset(assets []ReleaseInfo) (string, error) {
 	}
 
 	for _, asset := range assets {
-		if asset.Name == assetName {
+		if strings.ToLower(asset.Name) == assetName {
 			fmt.Printf("Downloading %s...\n", asset.Name)
 			path, err := downloadFile(asset.BrowserDownloadURL, fmt.Sprintf("%s/fyodorov", common.GetPlatformBasePath()))
 			if runtime.GOOS != "windows" {
@@ -95,5 +106,5 @@ func downloadAppropriateAsset(assets []ReleaseInfo) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("compatible asset not found")
+	return "", fmt.Errorf("compatible asset not found: %s", assetName)
 }
