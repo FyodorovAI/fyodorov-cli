@@ -44,7 +44,12 @@ func (c *ModelConfig) Validate() error {
 	if c.Provider == "" {
 		return fmt.Errorf("model provider is required")
 	}
-	return c.ModelInfo.Validate()
+	if c.ModelInfo != nil {
+		if err := c.ModelInfo.Validate(); err != nil {
+			return fmt.Errorf("model info is invalid: %v", err)
+		}
+	}
+	return nil
 }
 
 func contains(array []string, element string) bool {
