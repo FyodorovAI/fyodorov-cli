@@ -1,6 +1,10 @@
 # minimal_agent.yaml
 version: "0.0.1"
 
+models:
+  - name: local_fallback
+    provider: ollama
+
 agents:
   - name: solo_local
     description: Minimal agent, no provider or model defined
