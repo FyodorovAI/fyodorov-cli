@@ -39,36 +39,37 @@ var copilotCmd = &cobra.Command{
 var validateTemplateCmd = &cobra.Command{
 	Use:   "validate [file]",
 	Short: "Validate a Fyodorov configuration",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// Load the config from the file
-		config, err := common.LoadConfig[common.FyodorovConfig](args[0])
-		if err != nil {
-			fmt.Printf("Error loading fyodorov config from file %s: %v\n", args[0], err)
-			return
-		}
+		for _, arg := range args {
+			// Load the config from the file
+			config, err := common.LoadConfig[common.FyodorovConfig](arg)
+			if err != nil {
+				fmt.Printf("Error loading fyodorov config '%s' from file: %v\n", arg, err)
+				return
+			}
 
-		// Load the file directly
-		fileBytes, err := os.ReadFile(args[0])
-		if err != nil {
-			fmt.Printf("Error opening fyodorov config file %s: %v\n", args[0], err)
-			return
-		}
+			// Load the file directly
+			fileBytes, err := os.ReadFile(arg)
+			if err != nil {
+				fmt.Printf("Error opening fyodorov config file '%s': %v\n", arg, err)
+				return
+			}
 
-		// Verify there are no other fields in the file
-		var cfg common.FyodorovConfig
-		dec := yaml.NewDecoder(bytes.NewReader(fileBytes))
-		dec.KnownFields(true) // ← reject any unknown fields
-		if err := dec.Decode(&cfg); err != nil {
-			fmt.Printf("invalid config: %v", err)
-			return
-		}
-		// Validate the config
-		if err := config.Validate(); err != nil {
-			fmt.Printf("Fyodorov config is invalid: %v\n", err)
-			return
-		}
+			// Verify there are no other fields in the file
+			var cfg common.FyodorovConfig
+			dec := yaml.NewDecoder(bytes.NewReader(fileBytes))
+			dec.KnownFields(true) // ← reject any unknown fields
+			if err := dec.Decode(&cfg); err != nil {
+				fmt.Printf("invalid config: %v", err)
+				return
+			}
+			// Validate the config
+			if err := config.Validate(); err != nil {
+				fmt.Printf("Fyodorov config '%s' is invalid: %v\n", arg, err)
+				return
+			}
 
-		fmt.Println("Fyodorov config is valid")
+			fmt.Printf("Fyodorov config '%s' is valid\n", arg)
+		}
 	},
 }
