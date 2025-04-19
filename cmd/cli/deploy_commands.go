@@ -9,7 +9,7 @@ import (
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -39,6 +39,12 @@ var deployTemplateCmd = &cobra.Command{
 		if len(values) > 0 {
 			FyodorovConfig.ParseKeyValuePairs(values)
 		}
+		// validate fyodorov config
+		err = FyodorovConfig.Validate()
+		if err != nil {
+			fmt.Printf("Error validating fyodorov config: %v\n", err)
+			return
+		}
 		// print fyodorov config to stdout
 		if dryRun {
 			bytes, err := yaml.Marshal(FyodorovConfig)
@@ -46,6 +52,8 @@ var deployTemplateCmd = &cobra.Command{
 				fmt.Printf("Error marshaling fyodorov config to yaml: %v\n", err)
 				return
 			}
+			// Print the YAML to stdout
+			fmt.Println("Validated config")
 			fmt.Printf("---Fyodorov config---\n%s\n", string(bytes))
 			return
 		}
@@ -92,7 +100,7 @@ var deployTemplateCmd = &cobra.Command{
 				}
 				cliConfig.Agents = append(cliConfig.Agents, common.AgentClient{
 					ID:        agent.ID,
-					Name:      agent.NameForHuman,
+					Name:      agent.Name,
 					Instances: getInstanceForAgent(agent.ID, bodyResponse.Instances),
 				})
 			}

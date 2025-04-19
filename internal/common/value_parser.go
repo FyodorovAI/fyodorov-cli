@@ -38,7 +38,8 @@ func (config *FyodorovConfig) parseKey(key, value string) {
 		case "agents":
 			config.parseAgentKey(remainingKeys, value)
 		case "tools":
-			config.parseToolKey(remainingKeys, value)
+			// config.parseToolKey(remainingKeys, value)
+			config.parseMCPToolKey(remainingKeys, value)
 		default:
 			fmt.Printf("Unknown key: %s\n", firstKey)
 		}
@@ -58,15 +59,15 @@ func parseComplexKey(keys []string) (firstKey string, remainingKeys []string) {
 	return firstKey, remainingKeys
 }
 
-func (config *FyodorovConfig) parseProviderKey(key []string, value string) {
+func (config *FyodorovConfig) parseMCPToolKey(key []string, value string) {
 	if len(key) == 0 {
 		return
 	}
-	if config.Providers == nil {
-		config.Providers = &[]Provider{}
+	if config.Tools == nil {
+		config.Tools = []MCPTool{}
 	}
 	index := parseIndex(key[0])
-	if index >= len(*config.Providers) {
+	if index >= len(config.Tools) {
 		fmt.Printf("Invalid index: %d\n", index)
 		return
 	}
@@ -75,11 +76,46 @@ func (config *FyodorovConfig) parseProviderKey(key []string, value string) {
 	}
 	switch key[1] {
 	case "name":
-		(*config.Providers)[index].Name = value
+		(config.Tools)[index].Name = value
+	case "description":
+		(config.Tools)[index].Description = value
+	case "logo_url":
+		(config.Tools)[index].LogoURL = value
+	case "api":
+		if len(key) < 3 {
+			return
+		}
+		switch key[2] {
+		default:
+			fmt.Printf("Unknown key: %s\n", key[2])
+		}
+	default:
+		fmt.Printf("Unknown key: %s\n", key[1])
+	}
+}
+
+func (config *FyodorovConfig) parseProviderKey(key []string, value string) {
+	if len(key) == 0 {
+		return
+	}
+	if config.Providers == nil {
+		config.Providers = []Provider{}
+	}
+	index := parseIndex(key[0])
+	if index >= len(config.Providers) {
+		fmt.Printf("Invalid index: %d\n", index)
+		return
+	}
+	if len(key) == 1 {
+		return
+	}
+	switch key[1] {
+	case "name":
+		(config.Providers)[index].Name = value
 	case "url":
-		(*config.Providers)[index].URL = value
+		(config.Providers)[index].URL = value
 	case "api_key":
-		(*config.Providers)[index].APIKey = value
+		(config.Providers)[index].APIKey = value
 	default:
 		fmt.Printf("Unknown key: %s\n", key[1])
 	}
@@ -90,10 +126,10 @@ func (config *FyodorovConfig) parseModelKey(key []string, value string) {
 		return
 	}
 	if config.Models == nil {
-		config.Models = &[]ModelConfig{}
+		config.Models = []ModelConfig{}
 	}
 	index := parseIndex(key[0])
-	if index >= len(*config.Models) {
+	if index >= len(config.Models) {
 		fmt.Printf("Invalid index: %d\n", index)
 		return
 	}
@@ -102,13 +138,13 @@ func (config *FyodorovConfig) parseModelKey(key []string, value string) {
 	}
 	switch key[1] {
 	case "name":
-		(*config.Models)[index].Name = value
+		(config.Models)[index].Name = value
 	case "provider":
-		(*config.Models)[index].Provider = value
+		(config.Models)[index].Provider = value
 	case "params":
-		(*config.Models)[index].parseModelParams(key[2:], value)
+		(config.Models)[index].parseModelParams(key[2:], value)
 	case "model_info":
-		(*config.Models)[index].parseModelInfo(key[2:], value)
+		(config.Models)[index].parseModelInfo(key[2:], value)
 	default:
 		fmt.Printf("Unknown key: %s\n", key[1])
 	}
@@ -159,66 +195,66 @@ func (config *ModelConfig) parseModelInfo(key []string, value string) {
 	}
 }
 
-func (config *FyodorovConfig) parseToolKey(key []string, value string) {
-	if len(key) == 0 {
-		return
-	}
-	if config.Tools == nil {
-		config.Tools = &[]Tool{}
-	}
-	index := parseIndex(key[0])
-	if index >= len(*config.Tools) {
-		fmt.Printf("Invalid index: %d\n", index)
-		return
-	}
-	if len(key) == 1 {
-		return
-	}
-	switch key[1] {
-	case "name":
-		(*config.Tools)[index].NameForHuman = value
-	case "description":
-		(*config.Tools)[index].DescriptionForHuman = value
-	case "name_for_ai":
-		(*config.Tools)[index].NameForAI = value
-	case "description_for_ai":
-		(*config.Tools)[index].DescriptionForAI = value
-	case "api":
-		switch key[2] {
-		case "type":
-			(*config.Tools)[index].API.Type = value
-		case "url":
-			(*config.Tools)[index].API.URL = value
-		default:
-			fmt.Printf("Unknown key under api: %s\n", key[2])
-		}
-	case "logo_url":
-		(*config.Tools)[index].LogoURL = value
-	case "contact_email":
-		(*config.Tools)[index].ContactEmail = value
-	case "legal_info_url":
-		(*config.Tools)[index].LegalInfoURL = value
-	case "auth":
-		switch key[2] {
-		case "type":
-			(*config.Tools)[index].Auth.Type = value
-		default:
-			fmt.Printf("Unknown key under auth: %s\n", key[2])
-		}
-	default:
-		fmt.Printf("Unknown key: %s\n", key[1])
-	}
-}
+// func (config *FyodorovConfig) parseToolKey(key []string, value string) {
+// 	if len(key) == 0 {
+// 		return
+// 	}
+// 	if config.Tools == nil {
+// 		config.Tools = &[]Tool{}
+// 	}
+// 	index := parseIndex(key[0])
+// 	if index >= len(*config.Tools) {
+// 		fmt.Printf("Invalid index: %d\n", index)
+// 		return
+// 	}
+// 	if len(key) == 1 {
+// 		return
+// 	}
+// 	switch key[1] {
+// 	case "name":
+// 		(*config.Tools)[index].NameForHuman = value
+// 	case "description":
+// 		(*config.Tools)[index].DescriptionForHuman = value
+// 	case "name_for_ai":
+// 		(*config.Tools)[index].NameForAI = value
+// 	case "description_for_ai":
+// 		(*config.Tools)[index].DescriptionForAI = value
+// 	case "api":
+// 		switch key[2] {
+// 		case "type":
+// 			(*config.Tools)[index].API.Type = value
+// 		case "url":
+// 			(*config.Tools)[index].API.URL = value
+// 		default:
+// 			fmt.Printf("Unknown key under api: %s\n", key[2])
+// 		}
+// 	case "logo_url":
+// 		(*config.Tools)[index].LogoURL = value
+// 	case "contact_email":
+// 		(*config.Tools)[index].ContactEmail = value
+// 	case "legal_info_url":
+// 		(*config.Tools)[index].LegalInfoURL = value
+// 	case "auth":
+// 		switch key[2] {
+// 		case "type":
+// 			(*config.Tools)[index].Auth.Type = value
+// 		default:
+// 			fmt.Printf("Unknown key under auth: %s\n", key[2])
+// 		}
+// 	default:
+// 		fmt.Printf("Unknown key: %s\n", key[1])
+// 	}
+// }
 
 func (config *FyodorovConfig) parseAgentKey(key []string, value string) {
 	if len(key) == 0 {
 		return
 	}
 	if config.Agents == nil {
-		config.Agents = &[]Agent{}
+		config.Agents = []Agent{}
 	}
 	index := parseIndex(key[0])
-	if index >= len(*config.Agents) {
+	if index >= len(config.Agents) {
 		fmt.Printf("Agent index out of range: %d\n", index)
 		return
 	}
@@ -227,17 +263,17 @@ func (config *FyodorovConfig) parseAgentKey(key []string, value string) {
 	}
 	switch key[1] {
 	case "model":
-		(*config.Agents)[index].Model = value
+		(config.Agents)[index].Model = value
 	case "name":
-		(*config.Agents)[index].NameForHuman = value
+		(config.Agents)[index].Name = value
 	case "description":
-		(*config.Agents)[index].DescriptionForHuman = value
+		(config.Agents)[index].Description = value
 	case "prompt":
-		(*config.Agents)[index].Prompt = value
+		(config.Agents)[index].Prompt = value
 	case "tools":
-		(*config.Agents)[index].Tools = strings.Split(value, ",")
+		config.parseMCPToolKey(key[2:], value)
 	case "rag":
-		(*config.Agents)[index].Rag = strings.Split(value, ",")
+		(config.Agents)[index].Rag = strings.Split(value, ",")
 	default:
 		fmt.Printf("Unknown key: %s\n", key[1])
 	}

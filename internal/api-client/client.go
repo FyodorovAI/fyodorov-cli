@@ -59,7 +59,7 @@ func (c *APIClient) Authenticate() error {
 		return err
 	}
 
-	fmt.Println(response.Message)
+	// fmt.Println(response.Message)
 	c.AuthToken = response.JWT
 	return nil
 }
@@ -80,6 +80,7 @@ func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.Rea
 	if c.AuthToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
 	}
+	req.Header.Set("User-Agent", "fyodorov-cli-tool")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

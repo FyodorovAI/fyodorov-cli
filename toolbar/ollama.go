@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	UpdateOllama()
+	// UpdateOllama()
 }
 
 var (
@@ -43,6 +43,7 @@ type OllamaTags struct {
 }
 
 func UpdateOllama() {
+	fmt.Println("Starting ollama update...")
 	// Run UpdateProvider() every x minutes
 	x := 5 // Change x to the desired number of minutes
 	duration := time.Duration(x) * time.Minute
@@ -60,9 +61,11 @@ func UpdateOllama() {
 }
 
 func ollama() {
+	fmt.Println("Ollama function called")
 	if !localModelsEnabled {
 		return
 	}
+	fmt.Println("Updating ollama models...")
 	// Get API status of localhost ollama
 	url := fmt.Sprintf("http://localhost:%d", ollamaPort)
 	resp, err := http.Get(url)

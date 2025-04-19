@@ -1,12 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func init() {
@@ -55,16 +56,17 @@ var validateTemplateCmd = &cobra.Command{
 		}
 
 		// Verify there are no other fields in the file
-		marshalledConfig, err := yaml.Marshal(config)
-		if err != nil {
-			fmt.Printf("Error marshaling fyodorov config back to yaml: %v\n", err)
+		var cfg common.FyodorovConfig
+		dec := yaml.NewDecoder(bytes.NewReader(fileBytes))
+		dec.KnownFields(true) // ← reject any unknown fields
+		if err := dec.Decode(&cfg); err != nil {
+			fmt.Printf("invalid config: %v", err)
 			return
 		}
-		for i := range fileBytes {
-			if fileBytes[i] != marshalledConfig[i] {
-				fmt.Println("Fyodorov config contains invalid fields")
-				return
-			}
+		// Validate the config
+		if err := config.Validate(); err != nil {
+			fmt.Printf("Fyodorov config is invalid: %v\n", err)
+			return
 		}
 
 		fmt.Println("Fyodorov config is valid")

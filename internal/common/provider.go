@@ -8,7 +8,7 @@ import (
 type Provider struct {
 	Name   string `json:"name" yaml:"name"`
 	URL    string `json:"api_url" yaml:"api_url,omitempty"`
-	APIKey string `json:"api_key" yaml:"api_key"`
+	APIKey string `json:"api_key" yaml:"api_key,omitempty"`
 }
 
 func CreateProvider() *Provider {
@@ -23,16 +23,11 @@ func (c *Provider) Validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("provider name is required")
 	}
-	if c.URL == "" {
-		return fmt.Errorf("provider URL is required")
-	} else {
+	if c.URL != "" {
 		_, err := url.Parse(c.URL)
 		if err != nil {
 			return err
 		}
-	}
-	if c.APIKey == "" {
-		return fmt.Errorf("provider API key is required")
 	}
 	return nil
 }

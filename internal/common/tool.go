@@ -2,11 +2,11 @@ package common
 
 // Tool represents the configuration structure for a tool
 type Tool struct {
-	NameForHuman        string `json:"name" yaml:"name,omitempty"`
-	NameForAI           string `json:"name_for_ai" yaml:"name_for_ai,omitempty"`
-	DescriptionForHuman string `json:"description" yaml:"description,omitempty"`
-	DescriptionForAI    string `json:"description_for_ai" yaml:"description_for_ai,omitempty"`
-	API                 struct {
+	NameForHuman     string `json:"name" yaml:"name,omitempty"`
+	NameForAI        string `json:"name_for_ai" yaml:"name_for_ai,omitempty"`
+	Description      string `json:"description" yaml:"description,omitempty"`
+	DescriptionForAI string `json:"description_for_ai" yaml:"description_for_ai,omitempty"`
+	API              struct {
 		Type string `json:"type" yaml:"type,omitempty"`
 		URL  string `json:"url" yaml:"url,omitempty"`
 	} `json:"api" yaml:"api,omitempty"`

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ConfigLoader is an interface for loading configuration from a file.
@@ -22,15 +22,19 @@ func LoadConfig[T any](filename string) (*T, error) {
 		return nil, err
 	}
 
+	// Expand environment variables in the file contents
+	//  Any ${FOO} will be replaced with os.Getenv("FOO")
+	expanded := os.ExpandEnv(string(bytes))
+
 	var config T
 	switch filepath.Ext(filename) {
 	case ".json":
-		if err := json.Unmarshal(bytes, &config); err != nil {
+		if err := json.Unmarshal([]byte(expanded), &config); err != nil {
 			fmt.Printf("Error unmarshaling json config from file %s: %v\n", filename, err)
 			return nil, err
 		}
 	case ".yaml", ".yml":
-		if err := yaml.Unmarshal(bytes, &config); err != nil {
+		if err := yaml.Unmarshal([]byte(expanded), &config); err != nil {
 			fmt.Printf("Error unmarshaling yaml config from file %s: %v\n", filename, err)
 			return nil, err
 		}
