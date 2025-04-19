@@ -25,88 +25,89 @@ func init() {
 
 // Fyodorov commands
 var deployTemplateCmd = &cobra.Command{
-	Use:   "deploy [file]",
+	Use:   "deploy [file [file1 file2 ...]]",
 	Short: "Deploy a Fyodorov configuration",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// load fyodorov config from file
-		FyodorovConfig, err := common.LoadConfig[common.FyodorovConfig](args[0])
-		if err != nil {
-			fmt.Printf("Error loading fyodorov config from file %s: %v\n", args[0], err)
-			return
-		}
-		// load fyodorov config from values
-		if len(values) > 0 {
-			FyodorovConfig.ParseKeyValuePairs(values)
-		}
-		// validate fyodorov config
-		err = FyodorovConfig.Validate()
-		if err != nil {
-			fmt.Printf("Error validating fyodorov config: %v\n", err)
-			return
-		}
-		// print fyodorov config to stdout
-		if dryRun {
-			bytes, err := yaml.Marshal(FyodorovConfig)
+		// Allow deploying multiple configs passed as arguments
+		for _, arg := range args { // load fyodorov config from file
+			FyodorovConfig, err := common.LoadConfig[common.FyodorovConfig](arg)
 			if err != nil {
-				fmt.Printf("Error marshaling fyodorov config to yaml: %v\n", err)
+				fmt.Printf("Error loading fyodorov config from file %s: %v\n", arg, err)
 				return
 			}
-			// Print the YAML to stdout
-			fmt.Println("Validated config")
-			fmt.Printf("---Fyodorov config---\n%s\n", string(bytes))
-			return
-		}
-		// deploy config to Gagarin
-		if !dryRun {
-			yamlBytes, err := yaml.Marshal(FyodorovConfig)
+			// load fyodorov config from values
+			if len(values) > 0 {
+				FyodorovConfig.ParseKeyValuePairs(values)
+			}
+			// validate fyodorov config
+			err = FyodorovConfig.Validate()
 			if err != nil {
-				fmt.Printf("Error marshaling config to yaml: %v\n", err)
+				fmt.Printf("Error validating fyodorov config: %v\n", err)
 				return
 			}
-			client := api.NewAPIClient(config, config.GagarinURL)
-			err = client.Authenticate()
-			if err != nil {
-				fmt.Println("Error authenticating:", err)
-				return
-			}
-			var yamlBuffer bytes.Buffer
-			yamlBuffer.Write(yamlBytes)
-			res, err := client.CallAPI("POST", "/yaml", &yamlBuffer)
-			if err != nil {
-				fmt.Printf("Error deploying config: %v\n", err)
-				return
-			}
-			defer res.Close()
-			body, err := io.ReadAll(res)
-			if err != nil {
-				fmt.Printf("Error reading response body while deploying config: %v\n", err)
-				return
-			}
-			var bodyResponse BodyResponse
-			err = json.Unmarshal(body, &bodyResponse)
-			if err != nil {
-				fmt.Printf("Error unmarshaling response body while deploying config: %s\n\t%v\n", string(body), err)
-				return
-			}
-			cliConfig, err := common.LoadConfig[common.Config](common.GetConfigPath())
-			if err != nil {
-				fmt.Printf("Error loading config: %v\n", err)
-				return
-			}
-			for _, agent := range bodyResponse.Agents {
-				if checkIfAgentPresent(agent.ID, cliConfig.Agents) {
-					continue
+			// print fyodorov config to stdout
+			if dryRun {
+				bytes, err := yaml.Marshal(FyodorovConfig)
+				if err != nil {
+					fmt.Printf("Error marshaling fyodorov config to yaml: %v\n", err)
+					return
 				}
-				cliConfig.Agents = append(cliConfig.Agents, common.AgentClient{
-					ID:        agent.ID,
-					Name:      agent.Name,
-					Instances: getInstanceForAgent(agent.ID, bodyResponse.Instances),
-				})
+				// Print the YAML to stdout
+				fmt.Println("Validated config")
+				fmt.Printf("---Fyodorov config---\n%s\n", string(bytes))
+				return
 			}
-			common.SaveConfig[common.Config](cliConfig, common.GetConfigPath())
-			// Print deployed config
-			fmt.Println("Deployed config")
+			// deploy config to Gagarin
+			if !dryRun {
+				yamlBytes, err := yaml.Marshal(FyodorovConfig)
+				if err != nil {
+					fmt.Printf("Error marshaling config to yaml: %v\n", err)
+					return
+				}
+				client := api.NewAPIClient(config, config.GagarinURL)
+				err = client.Authenticate()
+				if err != nil {
+					fmt.Println("Error authenticating:", err)
+					return
+				}
+				var yamlBuffer bytes.Buffer
+				yamlBuffer.Write(yamlBytes)
+				res, err := client.CallAPI("POST", "/yaml", &yamlBuffer)
+				if err != nil {
+					fmt.Printf("Error deploying config: %v\n", err.Error())
+					return
+				}
+				defer res.Close()
+				body, err := io.ReadAll(res)
+				if err != nil {
+					fmt.Printf("Error reading response body while deploying config: %v\n", err)
+					return
+				}
+				var bodyResponse BodyResponse
+				err = json.Unmarshal(body, &bodyResponse)
+				if err != nil {
+					fmt.Printf("Error unmarshaling response body while deploying config: %s\n\t%v\n", string(body), err)
+					return
+				}
+				cliConfig, err := common.LoadConfig[common.Config](common.GetConfigPath())
+				if err != nil {
+					fmt.Printf("Error loading config: %v\n", err)
+					return
+				}
+				for _, agent := range bodyResponse.Agents {
+					if checkIfAgentPresent(agent.ID, cliConfig.Agents) {
+						continue
+					}
+					cliConfig.Agents = append(cliConfig.Agents, common.AgentClient{
+						ID:        agent.ID,
+						Name:      agent.Name,
+						Instances: getInstanceForAgent(agent.ID, bodyResponse.Instances),
+					})
+				}
+				common.SaveConfig[common.Config](cliConfig, common.GetConfigPath())
+				// Print deployed config
+				fmt.Printf("Deployed config %s\n", arg)
+			}
 		}
 	},
 }
