@@ -1,0 +1,10 @@
+# minimal_agent.yaml
+version: "0.0.1"
+
+agents:
+  - name: solo_local
+    description: Minimal agent, no provider or model defined
+    model: local_fallback
+    prompt: |
+      This agent uses the default local model.
+    tools: []      # explicitly empty

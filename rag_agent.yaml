@@ -1,0 +1,32 @@
+# rag_agent.yaml
+version: "0.2.0"
+
+providers:
+  - name: openai
+
+models:
+  - name: retrieval_model
+    provider: openai
+    model_info:
+      mode: embedding
+      base_model: text-embedding-ada-002
+
+tools:
+  - name: Doc Search
+    handle: doc_search
+    description: Semantic search over docs
+    api_url: https://search.example.com/v1
+
+agents:
+  - name: rag_bot
+    description: Answer questions with retrieval
+    model: retrieval_model
+    prompt: |
+      Use the retrieved context to answer the question.
+    tools:
+      - doc_search
+    rag:
+      - index: docs_index
+        top_k: 5
+      - index: faq_index
+        top_k: 3

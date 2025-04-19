@@ -1,0 +1,15 @@
+# invalid_fields.yaml
+version: "0.0.1"
+providers:
+  - name: openai
+    secret_key: OOPS   # invalid field—should be api_key
+
+models:
+  - name: test
+    provider: openai
+    extra_field: 123   # invalid
+
+agents:
+  - name: test_agent
+    model: test
+    tools: apis_guru   # type error: tools must be a list

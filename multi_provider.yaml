@@ -1,0 +1,51 @@
+# multi_provider.yaml
+version: "0.1.0"
+
+providers:
+  - name: openai
+    api_key: ${OPENAI_KEY}
+  - name: mistral
+    api_url: https://mistral.example.com
+    api_key: ${MISTRAL_KEY}
+
+models:
+  - name: gpt_chat
+    provider: openai
+    model_info:
+      mode: chat
+      base_model: gpt-4
+  - name: mixtral8
+    provider: mistral
+    model_info:
+      mode: chat
+      base_model: open-mixtral-8x7b
+
+tools:
+  - name: Lookup DB
+    handle: lookup_db
+    description: Query our customer database
+    api_url: https://db.internal/query
+    usage_notes: |
+      Requires JWT in the “Authorization” header.
+  - name: Web Scraper
+    handle: web_scrape
+    description: Fetch and parse webpages
+    api_url: https://scrape.example.com/api/v1
+
+agents:
+  - name: sales_assistant
+    description: Supports sales calls
+    model: gpt_chat
+    prompt: >
+      You are SalesBot. Help with product questions.
+    tools:
+      - lookup_db
+
+  - name: research_assistant
+    description: Fetches online articles
+    model: mixtral8
+    prompt: |
+      You are ResearchBot. Gather information from the web.
+    tools:
+      - web_scrape
+      - lookup_db
