@@ -1,0 +1,39 @@
+tools:
+  - name: Get Weather
+    handle: get_weather
+    description: Fetch the current temperature for a city.
+    api_url: https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true
+    api_type: openapi
+    capabilities:
+      functions:
+        - name: get_weather
+          description: Get the current temperature in a specific city.
+          parameters:
+            type: object
+            properties:
+              latitude:
+                type: number
+                description: Latitude of the city (e.g. 52.52 for Berlin)
+              longitude:
+                type: number
+                description: Longitude of the city (e.g. 13.41 for Berlin)
+            required: [latitude, longitude]
+    public: true
+
+providers:
+  - name: mistral
+
+models:
+  - name: fyodorov_tool_chat
+    provider: mistral
+    model_info:
+      base_model: Mistral Large
+
+agents:
+  - name: tool_demo
+    description: My agent for demoing Fyodorov
+    model: fyodorov_tool_chat
+    prompt: >
+      My name is Daniel. Ask me where I am and then give me the weather for that location.
+    tools:
+      - get_weather

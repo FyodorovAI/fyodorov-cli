@@ -39,7 +39,7 @@ var chatCmd = &cobra.Command{
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
-			fmt.Println("Unable to authenticate with this config")
+			fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
 			initConfig(cmd, args)
 		}
 		agentName := ""
@@ -90,26 +90,26 @@ var chatCmd = &cobra.Command{
 			}
 			jsonBytes, err := json.Marshal(req)
 			if err != nil {
-				fmt.Println("Error marshaling chat request to JSON:", err)
+				fmt.Println("\033[33mError marshaling chat request to JSON:\033[0m", err)
 				return
 			}
 			var jsonBuffer bytes.Buffer
 			jsonBuffer.Write(jsonBytes)
 			res, err := client.CallAPI("GET", "/instances/"+instance.ID+"/chat", &jsonBuffer)
 			if err != nil {
-				fmt.Printf("Error sending chat request: %v\n", err)
+				fmt.Printf("\033[33mError sending chat request: %v\nPLACEHOLDER_\033[0m", err)
 				return
 			}
 			defer res.Close()
 			body, err := io.ReadAll(res)
 			if err != nil {
-				fmt.Printf("Error reading response body while sending chat request: %v\n", err)
+				fmt.Printf("\033[33mError reading response body while sending chat request: %v\n\033[0m", err)
 				return
 			}
 			var response ChatResponse
 			err = json.Unmarshal(body, &response)
 			if err != nil {
-				fmt.Printf("Error unmarshaling response body while sending chat request: %v\n", err)
+				fmt.Printf("\033[33mError unmarshaling response body while sending chat request: %v\n\033[0m", err)
 				return
 			}
 			fmt.Printf("%s: %s\n", agent.Name, color.GreenString(response.Answer))

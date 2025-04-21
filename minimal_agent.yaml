@@ -4,6 +4,8 @@ version: "0.0.1"
 models:
   - name: local_fallback
     provider: ollama
+    model_info:
+      base_model: gamma2b
 
 agents:
   - name: solo_local

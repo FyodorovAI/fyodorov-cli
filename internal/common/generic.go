@@ -30,16 +30,16 @@ func LoadConfig[T any](filename string) (*T, error) {
 	switch filepath.Ext(filename) {
 	case ".json":
 		if err := json.Unmarshal([]byte(expanded), &config); err != nil {
-			fmt.Printf("Error unmarshaling json config from file %s: %v\n", filename, err)
+			fmt.Printf("\033[33mError unmarshaling json config from file %s: %v\n\033[0m", filename, err)
 			return nil, err
 		}
 	case ".yaml", ".yml":
 		if err := yaml.Unmarshal([]byte(expanded), &config); err != nil {
-			fmt.Printf("Error unmarshaling yaml config from file %s: %v\n", filename, err)
+			fmt.Printf("\033[33mError unmarshaling yaml config from file %s: %v\n\033[0m", filename, err)
 			return nil, err
 		}
 	default:
-		fmt.Printf("Error loading config from unsupported file format %s: %v\n", filename, err)
+		fmt.Printf("\033[33mError loading config from unsupported file format %s: %v\n\033[0m", filename, err)
 		return nil, fmt.Errorf("unsupported file format")
 	}
 
@@ -56,7 +56,7 @@ func SaveConfig[T any](config *T, filename string) error {
 	case ".yaml", ".yml":
 		bytes, err = yaml.Marshal(config)
 	default:
-		fmt.Printf("Unsupported file format %s: %v\n", filename, err)
+		fmt.Printf("\033[33mUnsupported file format %s: %v\n\033[0m", filename, err)
 		return fmt.Errorf("unsupported file format")
 	}
 	if err != nil {

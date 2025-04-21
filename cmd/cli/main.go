@@ -164,7 +164,7 @@ func initConfig(cmd *cobra.Command, args []string) {
 		fmt.Printf("Invalid config not saved\n")
 		return
 	} else if configRun {
-		fmt.Printf("\033[0;32mAuthenticated successfully!\033[0m\n")
+		fmt.Printf("\033[0;36mAuthenticated successfully!\033[0m\n")
 	}
 
 	// Create config directory if it doesn't exist

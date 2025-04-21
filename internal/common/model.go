@@ -22,7 +22,10 @@ type ModelConfig struct {
 var MODEL_MODES = []string{"embedding", "chat", "multimodal"}
 
 func (c *ModelInfo) Validate() error {
-	if !contains(MODEL_MODES, c.Mode) {
+	if c.BaseModel == "" {
+		return fmt.Errorf("base model is required")
+	}
+	if c.Mode != "" && !contains(MODEL_MODES, c.Mode) {
 		return fmt.Errorf("invalid model mode: %s", c.Mode)
 	}
 	if c.InputCostPerToken != nil && *c.InputCostPerToken < 0.0 {
@@ -48,6 +51,8 @@ func (c *ModelConfig) Validate() error {
 		if err := c.ModelInfo.Validate(); err != nil {
 			return fmt.Errorf("model info is invalid: %v", err)
 		}
+	} else {
+		return fmt.Errorf("model info is required")
 	}
 	return nil
 }
