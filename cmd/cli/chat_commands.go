@@ -109,7 +109,7 @@ var chatCmd = &cobra.Command{
 			var response ChatResponse
 			err = json.Unmarshal(body, &response)
 			if err != nil {
-				fmt.Printf("\033[33mError unmarshaling response body while sending chat request: %v\n\033[0m", err)
+				fmt.Printf("\033[33mError unmarshaling response body while sending chat request: \n\t%v\n\033[0m%s\n", err, string(body))
 				return
 			}
 			fmt.Printf("%s: %s\n", agent.Name, color.GreenString(response.Answer))
