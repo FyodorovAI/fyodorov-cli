@@ -27,7 +27,7 @@ models:
   - name: fyodorov_tool_chat
     provider: mistral
     model_info:
-      base_model: Mistral Large
+      base_model: mistral-large-2402
 
 agents:
   - name: tool_demo
