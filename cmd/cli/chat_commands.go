@@ -83,17 +83,25 @@ var chatCmd = &cobra.Command{
 		// fmt.Printf("Agent name (%+v): %s\n", agent.ID, agent.Name)
 		// fmt.Printf("Instance name (%+v): %+v\n\n", instance.ID, instance.Title)
 		if len(args) > 0 {
-			sendChatRequest(client, instance.ID, args[0])
+			err = sendChatRequest(client, instance.ID, args[0])
+			if err != nil {
+				fmt.Fprint(os.Stderr, err)
+				os.Exit(1)
+			}
 		}
 		for {
 			fmt.Fprint(os.Stderr, "\033[5m>\033[0m ") // Blinking '>' written to stderr
 			input, _ := reader.ReadString('\n')
-			sendChatRequest(client, instance.ID, input)
+			err = sendChatRequest(client, instance.ID, input)
+			if err != nil {
+				fmt.Fprint(os.Stderr, err)
+				os.Exit(1)
+			}
 		}
 	},
 }
 
-func sendChatRequest(client *api.APIClient, instanceID string, input string) {
+func sendChatRequest(client *api.APIClient, instanceID string, input string) error {
 	// Start the animation in a separate goroutine
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -109,7 +117,7 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 	jsonBytes, err := json.Marshal(req)
 	if err != nil {
 		fmt.Println("\033[33mError marshaling chat request to JSON:\033[0m", err)
-		return
+		return err
 	}
 	var jsonBuffer bytes.Buffer
 	jsonBuffer.Write(jsonBytes)
@@ -119,7 +127,7 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 		// Stop the animation
 		stopAnimation <- true
 		wg.Wait()
-		return
+		return err
 	}
 	defer res.Close()
 
@@ -130,16 +138,17 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 	body, err := io.ReadAll(res)
 	if err != nil {
 		fmt.Printf("\033[33mError reading response body while sending chat request: %v\n\033[0m", err)
-		return
+		return err
 	}
 	var response ChatResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		fmt.Printf("\033[33mError unmarshaling response body while sending chat request: \n\t%v\n\033[0m%s\n", err, string(body))
-		return
+		return err
 	}
 	fmt.Fprint(os.Stderr, color.GreenString(">"))
 	fmt.Printf("%s\n", color.GreenString(response.Answer))
+	return nil
 }
 
 func animateLoading(stop chan bool) {
