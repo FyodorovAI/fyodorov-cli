@@ -94,7 +94,6 @@ var chatCmd = &cobra.Command{
 }
 
 func sendChatRequest(client *api.APIClient, instanceID string, input string) {
-	fmt.Printf("Sending chat request to instance %s: %s\n", instanceID, input)
 	// Start the animation in a separate goroutine
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -139,6 +138,7 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 		fmt.Printf("\033[33mError unmarshaling response body while sending chat request: \n\t%v\n\033[0m%s\n", err, string(body))
 		return
 	}
+	fmt.Fprint(os.Stderr, color.GreenString(">"))
 	fmt.Printf("%s\n", color.GreenString(response.Answer))
 }
 
@@ -153,6 +153,7 @@ func animateLoading(stop chan bool) {
 				return
 			default:
 				// Print the current frame
+				fmt.Print("\r\033[K")
 				fmt.Printf("\r%s", frame)
 				time.Sleep(500 * time.Millisecond) // Adjust speed as needed
 			}
