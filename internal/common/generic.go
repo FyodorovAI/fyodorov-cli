@@ -52,7 +52,7 @@ func SaveConfig[T any](config *T, filename string) error {
 	var err error
 	switch filepath.Ext(filename) {
 	case ".json":
-		bytes, err = json.Marshal(config)
+		bytes, err = json.MarshalIndent(config, "", "  ")
 	case ".yaml", ".yml":
 		bytes, err = yaml.Marshal(config)
 	default:
