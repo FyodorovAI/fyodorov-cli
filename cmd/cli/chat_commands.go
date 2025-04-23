@@ -82,39 +82,46 @@ var chatCmd = &cobra.Command{
 		}
 		fmt.Printf("Agent name (%+v): %s\n", agent.ID, agent.Name)
 		fmt.Printf("Instance name (%+v): %+v\n\n", instance.ID, instance.Title)
+		if len(args) > 1 {
+			sendChatRequest(client, instance.ID, args[1])
+		}
 		for {
-			fmt.Print("Enter input: ")
+			fmt.Fprint(os.Stderr, "\033[5m>\033[0m ") // Blinking '>' written to stderr
 			input, _ := reader.ReadString('\n')
-			req := ChatRequest{
-				Input: strings.TrimSpace(input),
-			}
-			jsonBytes, err := json.Marshal(req)
-			if err != nil {
-				fmt.Println("\033[33mError marshaling chat request to JSON:\033[0m", err)
-				return
-			}
-			var jsonBuffer bytes.Buffer
-			jsonBuffer.Write(jsonBytes)
-			res, err := client.CallAPI("GET", "/instances/"+instance.ID+"/chat", &jsonBuffer)
-			if err != nil {
-				fmt.Printf("\033[33mError sending chat request: %v\nPLACEHOLDER_\033[0m", err)
-				return
-			}
-			defer res.Close()
-			body, err := io.ReadAll(res)
-			if err != nil {
-				fmt.Printf("\033[33mError reading response body while sending chat request: %v\n\033[0m", err)
-				return
-			}
-			var response ChatResponse
-			err = json.Unmarshal(body, &response)
-			if err != nil {
-				fmt.Printf("\033[33mError unmarshaling response body while sending chat request: \n\t%v\n\033[0m%s\n", err, string(body))
-				return
-			}
-			fmt.Printf("%s: %s\n", agent.Name, color.GreenString(response.Answer))
+			sendChatRequest(client, instance.ID, input)
 		}
 	},
+}
+
+func sendChatRequest(client *api.APIClient, instanceID string, input string) {
+	req := ChatRequest{
+		Input: strings.TrimSpace(input),
+	}
+	jsonBytes, err := json.Marshal(req)
+	if err != nil {
+		fmt.Println("\033[33mError marshaling chat request to JSON:\033[0m", err)
+		return
+	}
+	var jsonBuffer bytes.Buffer
+	jsonBuffer.Write(jsonBytes)
+	res, err := client.CallAPI("GET", "/instances/"+instanceID+"/chat", &jsonBuffer)
+	if err != nil {
+		fmt.Printf("\033[33mError sending chat request: %v\nPLACEHOLDER_\033[0m", err)
+		return
+	}
+	defer res.Close()
+	body, err := io.ReadAll(res)
+	if err != nil {
+		fmt.Printf("\033[33mError reading response body while sending chat request: %v\n\033[0m", err)
+		return
+	}
+	var response ChatResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		fmt.Printf("\033[33mError unmarshaling response body while sending chat request: \n\t%v\n\033[0m%s\n", err, string(body))
+		return
+	}
+	fmt.Printf("%s\n", color.GreenString(response.Answer))
 }
 
 type ChatRequest struct {
