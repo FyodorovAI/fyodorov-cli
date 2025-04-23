@@ -30,7 +30,7 @@ models:
       base_model: gpt-4.5
 
 agents:
-  - name: tool_demo
+  - name: openai_agent
     description: My agent for demoing Fyodorov
     model: fyodorov_openai_chat
     prompt: >
