@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
@@ -66,9 +68,7 @@ var chatCmd = &cobra.Command{
 			return
 		}
 		instanceName := "Default Instance"
-		if len(args) > 0 {
-			instanceName = args[0]
-		}
+		// @TODO: add a flag for specifying the instance name
 		if len(agent.Instances) == 0 {
 			fmt.Println("No instances found for that agent")
 			return
@@ -80,10 +80,10 @@ var chatCmd = &cobra.Command{
 				break
 			}
 		}
-		fmt.Printf("Agent name (%+v): %s\n", agent.ID, agent.Name)
-		fmt.Printf("Instance name (%+v): %+v\n\n", instance.ID, instance.Title)
-		if len(args) > 1 {
-			sendChatRequest(client, instance.ID, args[1])
+		// fmt.Printf("Agent name (%+v): %s\n", agent.ID, agent.Name)
+		// fmt.Printf("Instance name (%+v): %+v\n\n", instance.ID, instance.Title)
+		if len(args) > 0 {
+			sendChatRequest(client, instance.ID, args[0])
 		}
 		for {
 			fmt.Fprint(os.Stderr, "\033[5m>\033[0m ") // Blinking '>' written to stderr
@@ -94,6 +94,16 @@ var chatCmd = &cobra.Command{
 }
 
 func sendChatRequest(client *api.APIClient, instanceID string, input string) {
+	fmt.Printf("Sending chat request to instance %s: %s\n", instanceID, input)
+	// Start the animation in a separate goroutine
+	var wg sync.WaitGroup
+	wg.Add(1)
+	stopAnimation := make(chan bool)
+	go func() {
+		defer wg.Done()
+		animateLoading(stopAnimation)
+	}()
+
 	req := ChatRequest{
 		Input: strings.TrimSpace(input),
 	}
@@ -106,10 +116,18 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 	jsonBuffer.Write(jsonBytes)
 	res, err := client.CallAPI("GET", "/instances/"+instanceID+"/chat", &jsonBuffer)
 	if err != nil {
-		fmt.Printf("\033[33mError sending chat request: %v\nPLACEHOLDER_\033[0m", err)
+		fmt.Printf("\033[33m\nError sending chat request: %v\n\033[0m", err)
+		// Stop the animation
+		stopAnimation <- true
+		wg.Wait()
 		return
 	}
 	defer res.Close()
+
+	// Stop the animation
+	stopAnimation <- true
+	wg.Wait()
+
 	body, err := io.ReadAll(res)
 	if err != nil {
 		fmt.Printf("\033[33mError reading response body while sending chat request: %v\n\033[0m", err)
@@ -122,6 +140,24 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) {
 		return
 	}
 	fmt.Printf("%s\n", color.GreenString(response.Answer))
+}
+
+func animateLoading(stop chan bool) {
+	frames := []string{"...", "..", "."}
+	for {
+		for _, frame := range frames {
+			select {
+			case <-stop:
+				// Clear the line and exit the animation
+				fmt.Print("\r\033[K")
+				return
+			default:
+				// Print the current frame
+				fmt.Printf("\r%s", frame)
+				time.Sleep(500 * time.Millisecond) // Adjust speed as needed
+			}
+		}
+	}
 }
 
 type ChatRequest struct {
