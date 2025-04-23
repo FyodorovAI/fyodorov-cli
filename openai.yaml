@@ -1,24 +1,24 @@
-# tools:
-#   - name: Get Weather
-#     handle: get_weather
-#     description: Fetch the current temperature for a city.
-#     api_url: https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true
-#     api_type: openapi
-#     capabilities:
-#       functions:
-#         - name: get_weather
-#           description: Get the current temperature in a specific city.
-#           parameters:
-#             type: object
-#             properties:
-#               latitude:
-#                 type: number
-#                 description: Latitude of the city (e.g. 52.52 for Berlin)
-#               longitude:
-#                 type: number
-#                 description: Longitude of the city (e.g. 13.41 for Berlin)
-#             required: [latitude, longitude]
-#     public: true
+tools:
+  - name: Get Weather
+    handle: get_weather
+    description: Fetch the current temperature for a city.
+    api_url: https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true
+    api_type: openapi
+    capabilities:
+      functions:
+        - name: get_weather
+          description: Get the current temperature in a specific city.
+          parameters:
+            type: object
+            properties:
+              latitude:
+                type: number
+                description: Latitude of the city (e.g. 52.52 for Berlin)
+              longitude:
+                type: number
+                description: Longitude of the city (e.g. 13.41 for Berlin)
+            required: [latitude, longitude]
+    public: true
 
 providers:
   - name: openai
@@ -35,5 +35,5 @@ agents:
     model: fyodorov_openai_chat
     prompt: >
       My name is Daniel. Ask me what I'm working on.
-    # tools:
-    #   - get_weather
+    tools:
+      - get_weather
