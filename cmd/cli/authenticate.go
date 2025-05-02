@@ -71,14 +71,16 @@ var authCmd = &cobra.Command{
 				}
 				var jsonBuffer bytes.Buffer
 				jsonBuffer.Write(jsonBytes)
+				config, err := common.GetConfig(&common.Config{
+					Email:    req.Email,
+					Password: req.Password,
+				}, v)
+				if err != nil {
+					fmt.Printf("Error getting config: %v\n", err)
+					return
+				}
 				// call API
-				client := api.NewAPIClient(
-					&common.Config{
-						Email:    req.Email,
-						Password: req.Password,
-					},
-					v.GetString("gagarin-url"),
-				)
+				client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 				res, err := client.CallAPI("POST", "/users/sign_up", &jsonBuffer)
 				if err != nil {
 					fmt.Printf("Error signing up: %v\n", err)
@@ -110,10 +112,11 @@ var authCmd = &cobra.Command{
 					return
 				}
 				v.Set("password", strings.TrimSpace(string(passBytes)))
-				client := api.NewAPIClient(&common.Config{
-					Email:    v.GetString("email"),
-					Password: v.GetString("password"),
-				}, v.GetString("gagarin-url"))
+				config, err := common.GetConfig(nil, v)
+				if err != nil {
+					fmt.Printf("\033[0;31mError getting config:\033[0m +%v\n", err)
+				}
+				client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 				err = client.Authenticate()
 				if err != nil {
 					fmt.Printf("\033[0;31mError authenticating:\033[0m +%v\n", err.Error())
@@ -126,11 +129,12 @@ var authCmd = &cobra.Command{
 				}
 			}
 		}
-		client := api.NewAPIClient(&common.Config{
-			Email:    v.GetString("email"),
-			Password: v.GetString("password"),
-		}, v.GetString("gagarin-url"))
-		err := client.Authenticate()
+		config, err := common.GetConfig(nil, v)
+		if err != nil {
+			fmt.Printf("\033[0;31mError getting config:\033[0m +%v\n", err)
+		}
+		client := api.NewAPIClient(config, v.GetString("gagarin-url"))
+		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Printf("\033[0;31mUnable to authenticate with this config\033[0m\n")

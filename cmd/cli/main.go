@@ -10,7 +10,6 @@ import (
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -21,7 +20,8 @@ var (
 
 	defaultGagarinURL = "https://gagarin.danielransom.com"
 	NoCache           bool
-	v                *viper.Viper
+	// Init viper instance
+	v = common.InitViper()
 )
 
 func main() {
@@ -41,9 +41,6 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&email, "email", "u", "", "email for authentication")
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password for authentication")
 	rootCmd.PersistentFlags().BoolVarP(&NoCache, "no-cache", "n", false, "disable cache")
-
-	// Init viper instance
-	v = common.InitViper()
 
 	// Bind flags to Viper
 	v.BindPFlag("gagarin-url", rootCmd.PersistentFlags().Lookup("gagarin-url"))
@@ -134,11 +131,10 @@ func initConfig(cmd *cobra.Command, args []string) {
 	}
 
 	// Init config
-	config := &common.Config{
-		GagarinURL:     v.GetString("gagarin-url"),
-		TsiolkovskyURL: v.GetString("tsiolkovsky-url"),
-		Email:          v.GetString("email"),
-		Password:       v.GetString("password"),
+	config, err := common.GetConfig(nil, v)
+	if err != nil {
+		fmt.Printf("\033[0;31mError getting config:\033[0m %v\n", err)
+		return
 	}
 	config.Validate()
 
@@ -146,7 +142,7 @@ func initConfig(cmd *cobra.Command, args []string) {
 	client := api.NewAPIClient(config, "")
 
 	// Authenticate
-	err := client.Authenticate()
+	err = client.Authenticate()
 	if err != nil && !configRun {
 		fmt.Printf("\033[0;31mError authenticating:\033[0m %v\n", err)
 		return

@@ -8,14 +8,17 @@ import (
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/getlantern/systray"
 	"github.com/getlantern/systray/example/icon"
+	"github.com/spf13/viper"
 )
 
 var (
 	localModelsEnabled bool
+	v                  *viper.Viper
 )
 
 func main() {
 	fmt.Println("Starting toolbar...")
+	v = common.InitViper()
 	systray.Run(onReady, onExit)
 }
 
@@ -58,7 +61,7 @@ func onReady() {
 }
 
 func authenticate() {
-	config, err := common.LoadConfig[common.Config](common.GetConfigPath())
+	config, err := common.GetConfig(nil, v)
 	if err != nil {
 		fmt.Println("No config file found")
 	}

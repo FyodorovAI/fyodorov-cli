@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
@@ -102,8 +103,8 @@ func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.Rea
 	return resp.Body, nil
 }
 
-func (c *APIClient) GetResources(resourceType *string) (common.FyodorovConfig, error) {
-	var config common.FyodorovConfig
+func (c *APIClient) GetResources(resourceType *string, v *viper.Viper) (*common.FyodorovConfig, error) {
+	config := common.CreateFyodorovConfig(v)
 	var response io.ReadCloser
 	var err error
 	if resourceType == nil {

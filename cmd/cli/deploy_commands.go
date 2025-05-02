@@ -81,10 +81,12 @@ func deployYamlFile(filepath string) {
 			fmt.Printf("\033[34mError marshaling config to yaml: %v\n\033[0m", err)
 			return
 		}
-		client := api.NewAPIClient(&common.Config{
-			Email:    v.GetString("email"),
-			Password: v.GetString("password"),
-		}, v.GetString("gagarin-url"))
+		config, err := common.GetConfig(nil, v)
+		if err != nil {
+			fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
+			return
+		}
+		client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println("\033[33mError authenticating during deploy:\033[0m", err)

@@ -3,19 +3,22 @@ package common
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/spf13/viper"
 )
 
 var DEFAULT_VERSION = "0.0.1"
 
 type FyodorovConfig struct {
-	Version   string        `json:"version" yaml:"version,omitempty"`
-	Providers []Provider    `json:"providers,omitempty" yaml:"providers,omitempty"`
-	Models    []ModelConfig `json:"models,omitempty" yaml:"models,omitempty"`
-	Agents    []Agent       `json:"agents,omitempty" yaml:"agents,omitempty"`
-	Tools     []MCPTool     `json:"tools,omitempty" yaml:"tools,omitempty"`
-	Instances []Instance    `json:"instances,omitempty" yaml:"instances,omitempty"`
+	Version               string        `json:"version" yaml:"version,omitempty"`
+	Providers             []Provider    `json:"providers,omitempty" yaml:"providers,omitempty"`
+	Models                []ModelConfig `json:"models,omitempty" yaml:"models,omitempty"`
+	Agents                []Agent       `json:"agents,omitempty" yaml:"agents,omitempty"`
+	Tools                 []MCPTool     `json:"tools,omitempty" yaml:"tools,omitempty"`
+	Instances             []Instance    `json:"instances,omitempty" yaml:"instances,omitempty"`
+	TimeOfLastCacheUpdate time.Time     `json:"time_of_last_cache_update,omitempty" yaml:"time_of_last_cache_update,omitempty"`
 }
 
 type Instance struct {
@@ -42,12 +45,29 @@ func FormatString(s string) string {
 	return s
 }
 
-func CreateFyodorovConfig() *FyodorovConfig {
-	return &FyodorovConfig{
-		Version: DEFAULT_VERSION,
-		Agents:  nil,
-		Tools:   nil,
+func CreateFyodorovConfig(v *viper.Viper) *FyodorovConfig {
+	ttl := time.Duration(15)
+	if v.IsSet("ttl") {
+		ttl = v.GetDuration("ttl")
 	}
+	return &FyodorovConfig{
+		Version:               DEFAULT_VERSION,
+		Agents:                nil,
+		Tools:                 nil,
+		Models:                nil,
+		Providers:             nil,
+		Instances:             nil,
+		TimeOfLastCacheUpdate: time.Now().Add(-1 * ttl * time.Minute),
+	}
+}
+
+func (c *FyodorovConfig) IsExpired(v *viper.Viper) bool {
+	config, err := GetConfig(nil, v)
+	if err != nil {
+		fmt.Printf("Error getting config: %v\n", err)
+		return true
+	}
+	return time.Since(c.TimeOfLastCacheUpdate) > config.TTL
 }
 
 func (config *FyodorovConfig) Validate() error {

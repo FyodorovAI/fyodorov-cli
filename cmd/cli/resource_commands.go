@@ -13,71 +13,67 @@ import (
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	_ "github.com/spf13/viper/remote"
 	"gopkg.in/yaml.v3"
 )
 
 var (
 	resourceTypes = common.Enum{"models", "agents", "tools", "providers", "instances"}
-	cacheMutex    sync.Mutex
-	TTL           = 5 * time.Minute
-	initialRun    = true
-	cache         = Cache{
-		TTL:                 TTL,
-		TimeSinceLastUpdate: time.Now().Add(-TTL).Add(-1 * time.Minute),
-		Resources:           common.CreateFyodorovConfig(),
+	cache         = &Cache{
+		Resources: common.CreateFyodorovConfig(v),
+		FileName:  common.GetPlatformBasePath() + "/cache.yaml",
+		Mutex:     sync.Mutex{},
 	}
 )
 
-type Cache struct {
-	TTL                 time.Duration
-	TimeSinceLastUpdate time.Time
-	Resources           *common.FyodorovConfig
-}
-
-func (c *Cache) IsExpired() bool {
-	return time.Since(c.TimeSinceLastUpdate) > c.TTL
-}
-
-func (c *Cache) Update(resourceType *string) {
-	cacheMutex.Lock()
-	defer cacheMutex.Unlock()
-	fmt.Printf("%s Cache accessed\n", time.Now())
-	if initialRun || NoCache { // Populate cache on first run
-		fmt.Printf("Populating cache - initial run (%t) or no-cache (%t)\n", initialRun, NoCache)
-		c.Resources = getResources(nil)
-		c.TimeSinceLastUpdate = time.Now()
-		initialRun = false
-		return
-	}
-	if c.IsExpired() {
-		fmt.Printf("%s cache expired (%s), updating\n", time.Now(), c.TimeSinceLastUpdate)
-		resources := getResources(resourceType)
-		c.TimeSinceLastUpdate = time.Now()
-		if resourceType == nil {
-			c.Resources = resources
-			return
-		}
-		switch *resourceType {
-		case "models":
-			c.Resources.Models = resources.Models
-		case "agents":
-			c.Resources.Agents = resources.Agents
-		case "tools":
-			c.Resources.Tools = resources.Tools
-		case "providers":
-			c.Resources.Providers = resources.Providers
-		case "instances":
-			c.Resources.Instances = resources.Instances
-		default:
-			c.Resources = resources
-		}
-		fmt.Printf("%s Resources updated: %+v \n", c.TimeSinceLastUpdate, c.Resources)
-	}
-}
-
 func init() {
+	cache.ReadCacheFromFile()
 	rootCmd.AddCommand(listResourcesCmd)
 	rootCmd.AddCommand(removeResourcesCmd)
+}
+
+type Cache struct {
+	Viper     *viper.Viper
+	Resources *common.FyodorovConfig
+	FileName  string
+	Mutex     sync.Mutex
+}
+
+func (cache *Cache) Update() {
+	cache.Mutex.Lock()
+	defer cache.Mutex.Unlock()
+	cache.ReadCacheFromFile()
+	fmt.Printf("%s Cache accessed\n", time.Now())
+	if cache.Resources.IsExpired(v) || NoCache {
+		fmt.Printf("%s Cache expired (or NoCache true: %t)\n", cache.Resources.TimeOfLastCacheUpdate, NoCache)
+		cache.Resources = getResources(nil)
+		cache.Resources.TimeOfLastCacheUpdate = time.Now()
+		yamlBytes, err := yaml.Marshal(cache.Resources)
+		if err != nil {
+			fmt.Printf("Error marshaling fyodorov config to yaml for cache: %v\n", err)
+			return
+		}
+		err = os.WriteFile(cache.FileName, yamlBytes, 0644)
+		if err != nil {
+			fmt.Printf("Error writing cache file (%s): %v\n", cache.FileName, err)
+			return
+		}
+	}
+}
+
+func (cache *Cache) ReadCacheFromFile() error {
+	fileBytes, err := os.ReadFile(cache.FileName)
+	if err != nil {
+		fmt.Printf("Error reading cache file (%s): %v\n", cache.FileName, err)
+		return err
+	}
+	err = yaml.Unmarshal(fileBytes, &cache.Resources)
+	if err != nil {
+		fmt.Printf("Error unmarshaling cache: %v\n", err)
+		return err
+	}
+	return nil
 }
 
 var listResourcesCmd = &cobra.Command{
@@ -91,7 +87,7 @@ var listResourcesCmd = &cobra.Command{
 		return autocompleteResourceTypes, cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		resources := GetAllResources()
+		resources := GetResources()
 		var bytes []byte
 		var err error
 		if len(args) > 0 {
@@ -149,7 +145,7 @@ var removeResourcesCmd = &cobra.Command{
 				return nil, cobra.ShellCompDirectiveNoFileComp
 			}
 			// Get the list of resources for the specified type
-			resources := GetResources(&resourceType)
+			resources := GetResources()
 			var resourceNames []string
 			switch resourceType {
 			case "models":
@@ -200,7 +196,7 @@ var removeResourcesCmd = &cobra.Command{
 		}
 
 		resourceHandles := args[1:]
-		resources := GetAllResources()
+		resources := GetResources()
 		for _, resourceHandle := range resourceHandles {
 			resourceId := GetResourceIDByString(resources, resourceType, resourceHandle)
 			if resourceId < 1 {
@@ -261,9 +257,10 @@ func DeleteResources(resourceType string, resources []common.BaseModel) error {
 
 func DeleteResource(resourceType string, resourceId int64) {
 	var client *api.APIClient
-	config := &common.Config{
-		Email:    v.GetString("email"),
-		Password: v.GetString("password"),
+	config, err := common.GetConfig(nil, v)
+	if err != nil {
+		fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
+		return
 	}
 	if resourceType == "tools" {
 		if !v.IsSet("tsiolkovsky-url") {
@@ -274,7 +271,7 @@ func DeleteResource(resourceType string, resourceId int64) {
 	} else {
 		client = api.NewAPIClient(config, v.GetString("gagarin-url"))
 	}
-	err := client.Authenticate()
+	err = client.Authenticate()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
@@ -310,36 +307,28 @@ func DeleteResource(resourceType string, resourceId int64) {
 	fmt.Printf("\033[32mResource %s/%d deleted successfully\033[0m\n", resourceType, resourceId)
 }
 
-func GetAllResources() *common.FyodorovConfig {
-	return GetResources(nil)
-}
-
-func GetResources(resourceType *string) *common.FyodorovConfig {
-	cache.Update(resourceType)
+func GetResources() *common.FyodorovConfig {
+	cache.Update()
 	return cache.Resources
 }
 
 func getResources(resourceType *string) *common.FyodorovConfig {
-	config := &common.Config{
-		Email:    v.GetString("email"),
-		Password: v.GetString("password"),
+	config, err := common.GetConfig(nil, v)
+	if err != nil {
+		fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
+		os.Exit(1)
 	}
-	var client *api.APIClient
-	if resourceType != nil && *resourceType == "tools" {
-		client = api.NewAPIClient(config, v.GetString("tsiolkovsky-url"))
-	} else {
-		client = api.NewAPIClient(config, v.GetString("gagarin-url"))
-	}
-	err := client.Authenticate()
+	client := api.NewAPIClient(config, v.GetString("gagarin-url"))
+	err = client.Authenticate()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
 		os.Exit(1)
 	}
-	fyodorovConfig, err := client.GetResources(resourceType)
+	fyodorovConfig, err := client.GetResources(resourceType, v)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "\033[33mError fetching resources: %v\n\033[0m", err)
 		os.Exit(1)
 	}
-	return &fyodorovConfig
+	return fyodorovConfig
 }

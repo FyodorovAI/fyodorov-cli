@@ -148,7 +148,7 @@ func UpdateProvider() {
 	}
 	var providerBuffer bytes.Buffer
 	providerBuffer.Write(providerBytes)
-	config, err := common.LoadConfig[common.Config](common.GetConfigPath())
+	config, err := common.GetConfig(nil, v)
 	if err != nil {
 		fmt.Println("No config file found")
 	}
@@ -174,7 +174,7 @@ func UpdateProvider() {
 }
 
 func UpdateModel(model common.ModelConfig) {
-	config, err := common.LoadConfig[common.Config](common.GetConfigPath())
+	config, err := common.GetConfig(nil, v)
 	if err != nil {
 		fmt.Println("No config file found")
 	}

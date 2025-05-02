@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -16,7 +17,7 @@ type Config struct {
 	// DostoyevskyURL string `json:"dostoyevsky_url"`
 	Email    string        `json:"email"`
 	Password string        `json:"password"`
-	Agents   []AgentClient `json:"agents"`
+	TTL      time.Duration `json:"ttl"`
 }
 
 type AgentClient struct {
@@ -63,15 +64,25 @@ func GetPlatformBasePath() string {
 	}
 }
 
-func GetConfig() (*Config, error) {
-	config := &Config{
-		GagarinURL:     viper.GetString("gagarin-url"),
-		TsiolkovskyURL: viper.GetString("tsiolkovsky-url"),
-		// DostoyevskyURL: viper.GetString("dostoyevsky-url"),
-		Email:    viper.GetString("email"),
-		Password: viper.GetString("password"),
+func GetConfig(config *Config, v *viper.Viper) (*Config, error) {
+	if config == nil {
+		config = &Config{}
 	}
-
+	if config.GagarinURL == "" {
+		config.GagarinURL = v.GetString("gagarin-url")
+	}
+	if config.TsiolkovskyURL == "" {
+		config.TsiolkovskyURL = v.GetString("tsiolkovsky-url")
+	}
+	if config.Email == "" {
+		config.Email = v.GetString("email")
+	}
+	if config.Password == "" {
+		config.Password = v.GetString("password")
+	}
+	if config.TTL == 0 {
+		config.TTL = 5 * time.Minute
+	}
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -86,7 +97,7 @@ func InitViper() *viper.Viper {
 	// v.SetDefault("dostoyevsky-url", "https://dostoyevsky.danielransom.com")
 	v.SetDefault("email", "")
 	v.SetDefault("password", "")
-	v.SetDefault("no-cache", false)
+	v.SetDefault("ttl", 5*time.Minute)
 
 	// Set the config file name and path
 	v.SetConfigName("config")              // Name of the config file (without extension)

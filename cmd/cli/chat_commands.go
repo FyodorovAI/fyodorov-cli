@@ -19,10 +19,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	agentsString, instancesString = "agents", "instances"
-)
-
 func init() {
 	// Add command-specific flags
 	chatCmd.Flags().String("agent", "", "Specify the agent name")
@@ -35,7 +31,7 @@ var chatCmd = &cobra.Command{
 	Use:   "chat",
 	Short: "Manage Fyodorov configuration",
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		agents := GetResources(&agentsString).Agents
+		agents := GetResources().Agents
 		if len(args) == 0 {
 			agentNames := make([]string, len(agents))
 			for i, agent := range agents {
@@ -51,7 +47,7 @@ var chatCmd = &cobra.Command{
 					break
 				}
 			}
-			instances := GetResources(&instancesString).Instances
+			instances := GetResources().Instances
 			agentInstances := GetAgentInstances(instances, agent.ID)
 			instanceNames := make([]string, len(instances))
 			for i, instance := range agentInstances {
@@ -68,11 +64,13 @@ var chatCmd = &cobra.Command{
 			input, _ := reader.ReadString('\n')
 			v.Set("gagarin-url", strings.TrimSpace(input))
 		}
-		client := api.NewAPIClient(&common.Config{
-			Email:    v.GetString("email"),
-			Password: v.GetString("password"),
-		}, v.GetString("gagarin-url"))
-		err := client.Authenticate()
+		config, err := common.GetConfig(nil, v)
+		if err != nil {
+			fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
+			return
+		}
+		client := api.NewAPIClient(config, v.GetString("gagarin-url"))
+		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
@@ -84,8 +82,8 @@ var chatCmd = &cobra.Command{
 			args = args[1:]
 		}
 		var agent common.Agent
-		agents := GetResources(&agentsString).Agents
-		instances := GetResources(&instancesString).Instances
+		agents := GetResources().Agents
+		instances := GetResources().Instances
 		for _, agentTmp := range agents {
 			if agentTmp.Name == agentName {
 				fmt.Printf("Agent name (%s): %+v\n", agentTmp.Name, instances)
@@ -100,7 +98,7 @@ var chatCmd = &cobra.Command{
 			}
 			return
 		}
-		instances = GetResources(&instancesString).Instances
+		instances = GetResources().Instances
 		instances = slices.DeleteFunc(instances, func(instance common.Instance) bool {
 			return instance.AgentId != agent.ID
 		})
