@@ -28,6 +28,9 @@ func init() {
 var deployTemplateCmd = &cobra.Command{
 	Use:   "deploy file [file1 file2 ...]",
 	Short: "Deploy a Fyodorov configuration",
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "yml"}, cobra.ShellCompDirectiveFilterFileExt
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var wg sync.WaitGroup
 
@@ -78,10 +81,14 @@ func deployYamlFile(filepath string) {
 			fmt.Printf("\033[34mError marshaling config to yaml: %v\n\033[0m", err)
 			return
 		}
-		client := api.NewAPIClient(config, config.GagarinURL)
+		client := api.NewAPIClient(&common.Config{
+			Email:    v.GetString("email"),
+			Password: v.GetString("password"),
+		}, v.GetString("gagarin-url"))
 		err = client.Authenticate()
 		if err != nil {
-			fmt.Println("\033[33mError authenticating:\033[0m", err)
+			fmt.Println("\033[33mError authenticating during deploy:\033[0m", err)
+			fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
 			return
 		}
 		var yamlBuffer bytes.Buffer
@@ -100,31 +107,15 @@ func deployYamlFile(filepath string) {
 		var bodyResponse BodyResponse
 		err = json.Unmarshal(body, &bodyResponse)
 		if err != nil {
-			fmt.Printf("\033[33mError unmarshaling response body while deploying config: %s\n\t%v\n\033[0m", string(body), err)
+			fmt.Printf("\033[33mError unmarshaling response body while deploying config (%s): %s\n\t%v\n\033[0m", filepath, string(body), err)
 			return
 		}
-		cliConfig, err := common.LoadConfig[common.Config](common.GetConfigPath())
-		if err != nil {
-			fmt.Printf("\033[33mError loading config: %v\n\033[0m", err)
-			return
-		}
-		for _, agent := range bodyResponse.Agents {
-			if checkIfAgentPresent(agent.ID, cliConfig.Agents) {
-				continue
-			}
-			cliConfig.Agents = append(cliConfig.Agents, common.AgentClient{
-				ID:        agent.ID,
-				Name:      agent.Name,
-				Instances: getInstanceForAgent(agent.ID, bodyResponse.Instances),
-			})
-		}
-		common.SaveConfig[common.Config](cliConfig, common.GetConfigPath())
 		// Print deployed config
 		fmt.Printf("\033[36mDeployed config %s\033[0m\n", filepath)
 	}
 }
 
-func checkIfAgentPresent(agentID int, agents []common.AgentClient) bool {
+func checkIfAgentPresent(agentID int64, agents []common.AgentClient) bool {
 	for _, agent := range agents {
 		if agent.ID == agentID {
 			return true
@@ -133,13 +124,13 @@ func checkIfAgentPresent(agentID int, agents []common.AgentClient) bool {
 	return false
 }
 
-func getInstanceForAgent(agentID int, instances []InstanceResponse) []common.InstanceClient {
+func getInstanceForAgent(agentID int64, instances []InstanceResponse) []common.InstanceClient {
 	res := make([]common.InstanceClient, 0)
 	for _, instance := range instances {
-		if instance.AgentID == fmt.Sprint(agentID) {
+		if instance.AgentID == agentID {
 			res = append(res, common.InstanceClient{
-				ID:    instance.ID,
-				Title: instance.Title,
+				ID:   instance.ID,
+				Name: instance.Title,
 			})
 		}
 	}
@@ -147,7 +138,6 @@ func getInstanceForAgent(agentID int, instances []InstanceResponse) []common.Ins
 }
 
 type DatabaseMetadata struct {
-	ID        int    `json:"id"`
 	CreatedAt string `json:"created_at"`
 	UserID    string `json:"user_id"`
 }
@@ -171,10 +161,9 @@ type AgentResponse struct {
 }
 
 type InstanceResponse struct {
+	common.Instance
 	DatabaseMetadata
-	Title   string `json:"title"`
-	ID      string `json:"id"`
-	AgentID string `json:"agent_id"`
+	AgentID int64 `json:"agent_id"`
 }
 
 type ToolResponse struct {

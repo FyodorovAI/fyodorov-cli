@@ -8,10 +8,10 @@ import (
 
 // MCPTool mirrors the 'mcp_tools' table schema.
 type MCPTool struct {
-	ID           int64                  `json:"id,omitempty" yaml:"-" db:"id,omitempty"`                 // bigserial primary key
+	ID           int64                  `json:"id,omitempty" yaml:"id,omitempty"`
+	Name         string                 `json:"name,omitempty" yaml:"name,omitempty"`
 	CreatedAt    time.Time              `json:"created_at,omitempty" yaml:"-" db:"created_at,omitempty"` // timestamptz
 	UpdatedAt    time.Time              `json:"updated_at,omitempty" yaml:"-" db:"updated_at,omitempty"` // timestamptz
-	Name         string                 `json:"name,omitempty" yaml:"name,omitempty"`                    // text
 	Handle       string                 `json:"handle,omitempty" yaml:"handle,omitempty"`                // text
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`      // text
 	LogoURL      string                 `json:"logo_url,omitempty" yaml:"logo_url,omitempty"`            // text
@@ -41,4 +41,20 @@ func (t *MCPTool) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (t *MCPTool) GetID() int64 {
+	return t.ID
+}
+
+func (t *MCPTool) String() string {
+	var name string
+	if t.Handle != "" {
+		name = t.Handle
+	} else if t.Name != "" {
+		name = t.Name
+	} else {
+		name = "tool"
+	}
+	return fmt.Sprintf("%s-%d", FormatString(name), t.ID)
 }

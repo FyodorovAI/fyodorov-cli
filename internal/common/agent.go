@@ -8,8 +8,9 @@ var (
 )
 
 type Agent struct {
+	ID          int64    `json:"id,omitempty" yaml:"id,omitempty"`
+	Name        string   `json:"name,omitempty" yaml:"name,omitempty"`
 	Model       string   `json:"model" yaml:"model,omitempty"`
-	Name        string   `json:"name" yaml:"name,omitempty"`
 	Description string   `json:"description" yaml:"description,omitempty"`
 	Prompt      string   `json:"prompt" yaml:"prompt,omitempty"`
 	Tools       []string `json:"tools" yaml:"tools,omitempty"`
@@ -33,4 +34,12 @@ func (c *Agent) Validate() error {
 		return fmt.Errorf("prompt is required")
 	}
 	return nil
+}
+
+func (c *Agent) GetID() int64 {
+	return c.ID
+}
+
+func (c *Agent) String() string {
+	return fmt.Sprintf("%s-%d", FormatString(c.Name), c.ID)
 }

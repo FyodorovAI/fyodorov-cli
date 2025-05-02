@@ -1,6 +1,9 @@
 package common
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/Masterminds/semver"
 )
 
@@ -12,6 +15,31 @@ type FyodorovConfig struct {
 	Models    []ModelConfig `json:"models,omitempty" yaml:"models,omitempty"`
 	Agents    []Agent       `json:"agents,omitempty" yaml:"agents,omitempty"`
 	Tools     []MCPTool     `json:"tools,omitempty" yaml:"tools,omitempty"`
+	Instances []Instance    `json:"instances,omitempty" yaml:"instances,omitempty"`
+}
+
+type Instance struct {
+	ID      int64  `json:"id,omitempty" yaml:"id,omitempty"`
+	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
+	AgentId int64  `json:"agent_id,omitempty" yaml:"agent_id,omitempty"`
+}
+
+func (i Instance) String() string {
+	return fmt.Sprintf("%s-agent-%d", FormatString(i.Title), i.AgentId)
+}
+
+type BaseModel interface {
+	String() string
+	Validate() error
+	GetID() int64
+}
+
+func FormatString(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ToLower(s)
+	s = strings.ToValidUTF8(s, "")
+	s = strings.ReplaceAll(s, " ", "-")
+	return s
 }
 
 func CreateFyodorovConfig() *FyodorovConfig {

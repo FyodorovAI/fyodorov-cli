@@ -6,7 +6,8 @@ import (
 )
 
 type Provider struct {
-	Name   string `json:"name" yaml:"name"`
+	ID     int64  `json:"id,omitempty" yaml:"id,omitempty"`
+	Name   string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL    string `json:"api_url" yaml:"api_url,omitempty"`
 	APIKey string `json:"api_key" yaml:"api_key,omitempty"`
 }
@@ -40,4 +41,12 @@ func Validate(providers *[]Provider) error {
 		}
 	}
 	return nil
+}
+
+func (c *Provider) GetID() int64 {
+	return c.ID
+}
+
+func (c *Provider) String() string {
+	return fmt.Sprintf("%s-%d", FormatString(c.Name), c.ID)
 }

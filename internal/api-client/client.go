@@ -7,8 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
+	"gopkg.in/yaml.v3"
+)
+
+var (
+	httpClient = &http.Client{
+		Timeout: 20 * time.Second,
+	}
 )
 
 type APIClient struct {
@@ -23,9 +31,9 @@ func NewAPIClient(config *common.Config, baseURL string) *APIClient {
 	// if config.DostoyevskyURL != "" {
 	// 	host = config.DostoyevskyURL
 	// }
-	// if config.TsiolkovskyURL != "" {
-	// 	host = config.TsiolkovskyURL
-	// }
+	if config.TsiolkovskyURL != "" {
+		host = config.TsiolkovskyURL
+	}
 	if config.GagarinURL != "" {
 		host = config.GagarinURL
 	}
@@ -48,17 +56,14 @@ func (c *APIClient) Authenticate() error {
 	if err != nil {
 		return err
 	}
-
 	var response struct {
 		Message string `json:"message"`
 		JWT     string `json:"jwt"`
 	}
-
 	err = json.NewDecoder(responseBody).Decode(&response)
 	if err != nil {
 		return err
 	}
-
 	// fmt.Println(response.Message)
 	c.AuthToken = response.JWT
 	return nil
@@ -71,26 +76,54 @@ func (c *APIClient) CallAPI(method, endpoint string, body *bytes.Buffer) (io.Rea
 		endpoint = "/" + endpoint
 	}
 	url := c.BaseURL + endpoint
-	req, err := http.NewRequest(method, url, body)
+	var req *http.Request
+	var err error
+	if body == nil {
+		req, err = http.NewRequest(method, url, nil)
+	} else {
+		req, err = http.NewRequest(method, url, body)
+	}
 	if err != nil {
 		return nil, err
 	}
-
 	// Set the necessary headers, for example, Authorization headers
 	if c.AuthToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
 	}
 	req.Header.Set("User-Agent", "fyodorov-cli-tool")
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	if resp.StatusCode >= 400 {
 		// Handle HTTP errors here
 		return nil, fmt.Errorf("[%s] API request error: %s", url, resp.Status)
 	}
-
 	return resp.Body, nil
+}
+
+func (c *APIClient) GetResources(resourceType *string) (common.FyodorovConfig, error) {
+	var config common.FyodorovConfig
+	var response io.ReadCloser
+	var err error
+	if resourceType == nil {
+		response, err = c.CallAPI("GET", "/yaml/", nil)
+	} else {
+		response, err = c.CallAPI("GET", fmt.Sprintf("/yaml/%s", *resourceType), nil)
+	}
+	if err != nil {
+		return config, err
+	}
+	defer response.Close()
+	body, err := io.ReadAll(response)
+	if err != nil {
+		return config, err
+	}
+	dec := yaml.NewDecoder(bytes.NewReader(body))
+	// dec.KnownFields(true) // ← reject any unknown fields
+	if err := dec.Decode(&config); err != nil {
+		fmt.Printf("invalid config: %v", err)
+		return config, err
+	}
+	return config, nil
 }

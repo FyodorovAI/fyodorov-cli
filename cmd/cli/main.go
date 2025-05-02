@@ -4,43 +4,54 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
-	config  *common.Config
 	rootCmd = &cobra.Command{
-		Use:   "fyodorov [validate|deploy] file",
+		Use:   "fyodorov [validate|deploy|chat|config|list|remove] file",
 		Short: "Fyodorov CLI tool",
 	}
-)
 
-// Define global flags
-var (
-	gagarinURL string
-	// tsiolkovskyURL string
-	// dostoyevskyURL string
-	email             string
-	password          string
-	configRun         bool
 	defaultGagarinURL = "https://gagarin.danielransom.com"
+	NoCache           bool
+	v                *viper.Viper
 )
 
 func main() {
-	config = &common.Config{}
+	// Define flag variables
+	var (
+		gagarinURL     string
+		tsiolkovskyURL string
+		// dostoyevskyURL string
+		email    string
+		password string
+	)
 
 	// Define global flags
 	rootCmd.PersistentFlags().StringVarP(&gagarinURL, "gagarin-url", "b", "", "base URL for 'Gagarin'")
-	// rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "base URL for 'Tsiolkovsky'")
+	rootCmd.PersistentFlags().StringVarP(&tsiolkovskyURL, "tsiolkovsky-url", "t", "", "base URL for 'Tsiolkovsky'")
 	// rootCmd.PersistentFlags().StringVarP(&dostoyevskyURL, "dostoyevsky-url", "t", "", "base URL for 'Dostoyevsky'")
 	rootCmd.PersistentFlags().StringVarP(&email, "email", "u", "", "email for authentication")
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password for authentication")
+	rootCmd.PersistentFlags().BoolVarP(&NoCache, "no-cache", "n", false, "disable cache")
+
+	// Init viper instance
+	v = common.InitViper()
+
+	// Bind flags to Viper
+	v.BindPFlag("gagarin-url", rootCmd.PersistentFlags().Lookup("gagarin-url"))
+	v.BindPFlag("tsiolkovsky-url", rootCmd.PersistentFlags().Lookup("tsiolkovsky-url"))
+	// v.BindPFlag("dostoyevsky-url", rootCmd.PersistentFlags().Lookup("dostoyevsky-url"))
+	v.BindPFlag("email", rootCmd.PersistentFlags().Lookup("email"))
+	v.BindPFlag("password", rootCmd.PersistentFlags().Lookup("password"))
+	v.BindPFlag("no-cache", rootCmd.PersistentFlags().Lookup("no-cache"))
 
 	rootCmd.PersistentPreRun = initConfig
 
@@ -51,110 +62,91 @@ func main() {
 }
 
 func initConfig(cmd *cobra.Command, args []string) {
-	if cmd.Use == "auth" {
-		return
-	}
-	var err error
-	// Load from config if flags are not provided
-	// if !configRun && (gagarinURL == "" && tsiolkovskyURL == "" && dostoyevskyURL == "") || email == "" || password == "" {
-	if !configRun && gagarinURL == "" || email == "" || password == "" {
-		config, err = common.LoadConfig[common.Config](common.GetConfigPath())
-		if err != nil {
-			fmt.Println("No config file found")
-		}
-
-		if gagarinURL == "" && config != nil {
-			gagarinURL = config.GagarinURL
-		}
-		// if tsiolkovskyURL == "" && config != nil {
-		// 	tsiolkovskyURL = config.TsiolkovskyURL
-		// }
-		// if dostoyevskyURL == "" && config != nil {
-		// 	dostoyevskyURL = config.DostoyevskyURL
-		// }
-		if email == "" && config != nil {
-			email = config.Email
-		}
-		if password == "" && config != nil {
-			password = config.Password
-		}
-	}
-
-	// If still missing, prompt the user
+	configRun := cmd.Use == "config"
 	reader := bufio.NewReader(os.Stdin)
-	if gagarinURL == "" {
+
+	// Prompt for missing values
+	if !v.IsSet("gagarin-url") {
 		fmt.Printf("Enter Gagarin URL (default: %s): ", defaultGagarinURL)
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
-		gagarinURL = input
-		if gagarinURL == "" {
-			gagarinURL = defaultGagarinURL
+		if input != "" {
+			v.Set("gagarin-url", input)
+		} else {
+			v.Set("gagarin-url", defaultGagarinURL)
 		}
 	}
-	// if tsiolkovskyURL == "" {
-	// 	defaultTsiolkovskyURL := strings.Replace(gagarinURL, "gagarin", "tsiolkovsky", -1)
-	// 	fmt.Printf("Enter Tsiolkovsky URL (default: %s): ", defaultTsiolkovskyURL)
-	// 	tsiolkovskyURL, _ = reader.ReadString('\n')
-	// 	tsiolkovskyURL = strings.TrimSpace(tsiolkovskyURL)
-	// 	if tsiolkovskyURL == "" {
-	// 		tsiolkovskyURL = defaultTsiolkovskyURL
-	// 	}
-	// }
-	// if dostoyevskyURL == "" {
-	// 	defaultDostoyevskyURL := strings.Replace(tsiolkovskyURL, "gagarin", "dostoyevsky", -1)
-	// 	fmt.Printf("Enter Dostoyevsky URL (default: %s): ", defaultDostoyevskyURL)
-	// 	dostoyevskyURL, _ = reader.ReadString('\n')
-	// 	dostoyevskyURL = strings.TrimSpace(dostoyevskyURL)
-	// 	if dostoyevskyURL == "" {
-	// 		dostoyevskyURL = defaultDostoyevskyURL
-	// 	}
-	// }
-	if email == "" {
-		fmt.Print("Enter Email: ")
-		email, _ = reader.ReadString('\n')
-		email = strings.TrimSpace(email)
+	if !v.IsSet("tsiolkovsky-url") {
+		defaultTsiolkovskyURL := strings.Replace(v.GetString("gagarin-url"), "gagarin", "tsiolkovsky", -1)
+		fmt.Printf("Enter Tsiolkovsky URL (default: %s): ", defaultTsiolkovskyURL)
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+		if input != "" {
+			v.Set("tsiolkovsky-url", input)
+		} else {
+			v.Set("tsiolkovsky-url", defaultTsiolkovskyURL)
+		}
 	}
-	if password == "" {
+	// if !v.IsSet("dostoyevsky-url") {
+	// defaultDostoyevskyURL := strings.Replace(v.GetString("gagarin-url"), "gagarin", "dostoyevsky", -1)
+	// fmt.Printf("Enter Dostoyevsky URL (default: %s): ", defaultDostoyevskyURL)
+	// input, _ := reader.ReadString('\n')
+	// input = strings.TrimSpace(input)
+	// if input != "" {
+	// 	v.Set("dostoyevsky-url", input)
+	// }
+	// else {
+	// 	v.Set("dostoyevsky-url", defaultDostoyevskyURL)
+	// }
+	// }
+	if !v.IsSet("email") {
+		fmt.Print("Enter Email: ")
+		input, _ := reader.ReadString('\n')
+		v.Set("email", strings.TrimSpace(input))
+	}
+	if !v.IsSet("password") {
 		fmt.Print("Enter Password: ")
 		passBytes, err := gopass.GetPasswdMasked()
 		if err != nil {
 			fmt.Println("Error getting password:", err)
 			return
 		}
-		password = strings.TrimSpace(string(passBytes))
+		v.Set("password", strings.TrimSpace(string(passBytes)))
 	}
-
-	if config == nil {
-		config = &common.Config{}
-	}
-	config.GagarinURL = gagarinURL
-	// config.TsiolkovskyURL = tsiolkovskyURL
-	// config.DostoyevskyURL = dostoyevskyURL
-	config.Email = email
-	config.Password = password
 
 	// Print config
-	if cmd.Use == "config" && configRun {
+	if configRun {
 		fmt.Printf("--Config-------------------------------------\n")
-		fmt.Printf("Gagarin URL: %s\n", config.GagarinURL)
-		// fmt.Printf("Tsiolkovsky URL: %s\n", config.TsiolkovskyURL)
+		fmt.Printf("Gagarin URL: %s\n", v.GetString("gagarin-url"))
+		fmt.Printf("Tsiolkovsky URL: %s\n", v.GetString("tsiolkovsky-url"))
 		// fmt.Printf("Dostoyevsky URL: %s\n", config.DostoyevskyURL)
-		fmt.Printf("Email: %s\n", config.Email)
+		fmt.Printf("Email: %s\n", v.GetString("email"))
 		// Replace all but first and last letter with '*'
+		password := v.GetString("password")
 		fmt.Printf(
 			"Password: %s\n\n",
 			strings.ReplaceAll(
-				config.Password,
-				config.Password[1:len(config.Password)-2],
-				strings.Repeat("*", len(config.Password)-3),
+				password,
+				password[1:len(password)-2],
+				strings.Repeat("*", len(password)-3),
 			),
 		)
 	}
 
+	// Init config
+	config := &common.Config{
+		GagarinURL:     v.GetString("gagarin-url"),
+		TsiolkovskyURL: v.GetString("tsiolkovsky-url"),
+		Email:          v.GetString("email"),
+		Password:       v.GetString("password"),
+	}
+	config.Validate()
+
 	// Initialize API client
 	client := api.NewAPIClient(config, "")
-	// Authenticate if necessary
-	err = client.Authenticate()
+
+	// Authenticate
+	err := client.Authenticate()
 	if err != nil && !configRun {
 		fmt.Printf("\033[0;31mError authenticating:\033[0m %v\n", err)
 		return
@@ -164,19 +156,12 @@ func initConfig(cmd *cobra.Command, args []string) {
 		fmt.Printf("Invalid config not saved\n")
 		return
 	} else if configRun {
-		fmt.Printf("\033[0;36mAuthenticated successfully!\033[0m\n")
+		fmt.Printf("\033[0;36mAuthenticated config successfully!\033[0m\n")
 	}
 
-	// Create config directory if it doesn't exist
-	dir := filepath.Dir(common.GetConfigPath())
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.MkdirAll(dir, 0755)
-	}
-
-	// Save the configuration
-	err = common.SaveConfig[common.Config](config, common.GetConfigPath())
-	if err != nil {
-		fmt.Println("Error saving config:", err)
-		return
+	// Save the updated configuration
+	configPath := common.GetConfigPath()
+	if err := v.WriteConfigAs(configPath); err != nil {
+		fmt.Printf("Error saving config: %v\n", err)
 	}
 }

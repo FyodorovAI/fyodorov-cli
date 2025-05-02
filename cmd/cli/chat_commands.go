@@ -11,13 +11,22 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
+var (
+	agentsString, instancesString = "agents", "instances"
+)
+
 func init() {
+	// Add command-specific flags
+	chatCmd.Flags().String("agent", "", "Specify the agent name")
+	chatCmd.Flags().String("instance", "", "Specify the instance name")
 	rootCmd.AddCommand(chatCmd)
 }
 
@@ -25,20 +34,45 @@ func init() {
 var chatCmd = &cobra.Command{
 	Use:   "chat",
 	Short: "Manage Fyodorov configuration",
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		agents := GetResources(&agentsString).Agents
+		if len(args) == 0 {
+			agentNames := make([]string, len(agents))
+			for i, agent := range agents {
+				agentNames[i] = agent.Name
+			}
+			return agentNames, cobra.ShellCompDirectiveNoFileComp
+		} else if len(args) == 1 {
+			agentName := args[0]
+			var agent common.Agent
+			for _, agentTmp := range agents {
+				if agentTmp.Name == agentName {
+					agent = agentTmp
+					break
+				}
+			}
+			instances := GetResources(&instancesString).Instances
+			agentInstances := GetAgentInstances(instances, agent.ID)
+			instanceNames := make([]string, len(instances))
+			for i, instance := range agentInstances {
+				instanceNames[i] = instance.Name
+			}
+			return instanceNames, cobra.ShellCompDirectiveNoFileComp
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
-		config, err := common.LoadConfig[common.Config](common.GetConfigPath())
-		if err != nil || config == nil || config.GagarinURL == "" {
+		if !v.IsSet("gagarin-url") {
 			fmt.Println("Enter Gagarin URL:")
 			input, _ := reader.ReadString('\n')
-			gagarinURL = strings.TrimSpace(input)
-			if config == nil {
-				config = &common.Config{}
-			}
-			config.GagarinURL = gagarinURL
+			v.Set("gagarin-url", strings.TrimSpace(input))
 		}
-		client := api.NewAPIClient(config, gagarinURL)
-		err = client.Authenticate()
+		client := api.NewAPIClient(&common.Config{
+			Email:    v.GetString("email"),
+			Password: v.GetString("password"),
+		}, v.GetString("gagarin-url"))
+		err := client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Println("\033[33mUnable to authenticate with this config\033[0m")
@@ -49,32 +83,38 @@ var chatCmd = &cobra.Command{
 			agentName = args[0]
 			args = args[1:]
 		}
-		var agent common.AgentClient
-		for _, agentTmp := range config.Agents {
+		var agent common.Agent
+		agents := GetResources(&agentsString).Agents
+		instances := GetResources(&instancesString).Instances
+		for _, agentTmp := range agents {
 			if agentTmp.Name == agentName {
+				fmt.Printf("Agent name (%s): %+v\n", agentTmp.Name, instances)
 				agent = agentTmp
 				break
 			}
 		}
 		if agent.Name == "" {
-			if len(config.Agents) == 0 {
-				fmt.Printf("No agents found in the config.\n ")
-				return
-			}
 			fmt.Println("Please provide an agent from this list as the first argument:")
-			for _, agentTmp := range config.Agents {
+			for _, agentTmp := range agents {
 				fmt.Printf("%s (%d)\n", agentTmp.Name, agentTmp.ID)
 			}
 			return
 		}
-		instanceName := "Default Instance"
+		instances = GetResources(&instancesString).Instances
+		instances = slices.DeleteFunc(instances, func(instance common.Instance) bool {
+			return instance.AgentId != agent.ID
+		})
 		// @TODO: add a flag for specifying the instance name
-		if len(agent.Instances) == 0 {
+		if len(instances) == 0 {
 			fmt.Println("No instances found for that agent")
 			return
 		}
-		instance := agent.Instances[0]
-		for _, instanceTmp := range agent.Instances {
+		instance := instances[0]
+		instanceName := instance.Title
+		if len(args) > 1 {
+			instanceName = args[1]
+		}
+		for _, instanceTmp := range instances {
 			if instanceTmp.Title == instanceName {
 				instance = instanceTmp
 				break
@@ -101,7 +141,22 @@ var chatCmd = &cobra.Command{
 	},
 }
 
-func sendChatRequest(client *api.APIClient, instanceID string, input string) error {
+func GetAgentInstances(instances []common.Instance, agentID int64) []common.InstanceClient {
+	instanceClients := make([]common.InstanceClient, 0)
+	for _, instance := range instances {
+		if instance.AgentId == agentID {
+			instanceClient := common.InstanceClient{
+				ID:   instance.ID,
+				Name: instance.Title,
+			}
+			instanceClients = append(instanceClients, instanceClient)
+		}
+	}
+	fmt.Printf("Found instances for agent %d: %+v\n", agentID, instanceClients)
+	return instanceClients
+}
+
+func sendChatRequest(client *api.APIClient, instanceID int64, input string) error {
 	// Start the animation in a separate goroutine
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -121,7 +176,8 @@ func sendChatRequest(client *api.APIClient, instanceID string, input string) err
 	}
 	var jsonBuffer bytes.Buffer
 	jsonBuffer.Write(jsonBytes)
-	res, err := client.CallAPI("GET", "/instances/"+instanceID+"/chat", &jsonBuffer)
+	instanceIDStr := fmt.Sprintf("%d", instanceID)
+	res, err := client.CallAPI("GET", "/instances/"+instanceIDStr+"/chat", &jsonBuffer)
 	if err != nil {
 		fmt.Printf("\033[33m\nError sending chat request: %v\n\033[0m", err)
 		// Stop the animation

@@ -31,18 +31,17 @@ var authCmd = &cobra.Command{
 	Short: "Fyodorov authentication: sign up, log in, etc.",
 	Run: func(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
-		config, err := common.LoadConfig[common.Config](common.GetConfigPath())
-		if err != nil || config == nil || config.GagarinURL == "" {
+		if !v.IsSet("email") || !v.IsSet("password") || !v.IsSet("gagarin-url") {
+			if v.IsSet("gagarin-url") {
+				defaultGagarinURL = v.GetString("gagarin-url")
+			}
 			fmt.Printf("Enter Gagarin URL (default: %s): ", defaultGagarinURL)
 			input, _ := reader.ReadString('\n')
-			gagarinURL = strings.TrimSpace(input)
+			gagarinURL := strings.TrimSpace(input)
 			if gagarinURL == "" {
 				gagarinURL = defaultGagarinURL
 			}
-			if config == nil {
-				config = &common.Config{}
-			}
-			config.GagarinURL = gagarinURL
+			v.Set("gagarin-url", gagarinURL)
 			fmt.Print("Do you have an account? (y/n): ")
 			input, _ = reader.ReadString('\n')
 			if strings.TrimSpace(input) == "n" {
@@ -73,7 +72,13 @@ var authCmd = &cobra.Command{
 				var jsonBuffer bytes.Buffer
 				jsonBuffer.Write(jsonBytes)
 				// call API
-				client := api.NewAPIClient(config, gagarinURL)
+				client := api.NewAPIClient(
+					&common.Config{
+						Email:    req.Email,
+						Password: req.Password,
+					},
+					v.GetString("gagarin-url"),
+				)
 				res, err := client.CallAPI("POST", "/users/sign_up", &jsonBuffer)
 				if err != nil {
 					fmt.Printf("Error signing up: %v\n", err)
@@ -87,9 +92,9 @@ var authCmd = &cobra.Command{
 				}
 				fmt.Printf("\033[0;32mSigned up successfully!\033[0m\n")
 				// fmt.Println(string(body))
-				config.Email = req.Email
-				config.Password = req.Password
-				err = common.SaveConfig[common.Config](config, common.GetConfigPath())
+				v.Set("email", req.Email)
+				v.Set("password", req.Password)
+				err = v.WriteConfig()
 				if err != nil {
 					fmt.Println("Error saving config:", err)
 					return
@@ -97,29 +102,35 @@ var authCmd = &cobra.Command{
 			} else {
 				fmt.Print("Enter email: ")
 				input, _ = reader.ReadString('\n')
-				config.Email = strings.TrimSpace(input)
+				v.Set("email", strings.TrimSpace(input))
 				fmt.Print("Enter password: ")
 				passBytes, err := gopass.GetPasswdMasked()
 				if err != nil {
 					fmt.Println("Error reading password:", err)
 					return
 				}
-				config.Password = strings.TrimSpace(string(passBytes))
-				client := api.NewAPIClient(config, gagarinURL)
+				v.Set("password", strings.TrimSpace(string(passBytes)))
+				client := api.NewAPIClient(&common.Config{
+					Email:    v.GetString("email"),
+					Password: v.GetString("password"),
+				}, v.GetString("gagarin-url"))
 				err = client.Authenticate()
 				if err != nil {
 					fmt.Printf("\033[0;31mError authenticating:\033[0m +%v\n", err.Error())
 					return
 				}
-				err = common.SaveConfig[common.Config](config, common.GetConfigPath())
+				err = v.WriteConfig()
 				if err != nil {
 					fmt.Printf("\033[0;31mError saving config:\033[0m +%v\n", err.Error())
 					return
 				}
 			}
 		}
-		client := api.NewAPIClient(config, gagarinURL)
-		err = client.Authenticate()
+		client := api.NewAPIClient(&common.Config{
+			Email:    v.GetString("email"),
+			Password: v.GetString("password"),
+		}, v.GetString("gagarin-url"))
+		err := client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
 			fmt.Printf("\033[0;31mUnable to authenticate with this config\033[0m\n")

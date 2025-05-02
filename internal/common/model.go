@@ -13,19 +13,20 @@ type ModelInfo struct {
 type Params struct{}
 
 type ModelConfig struct {
-	Name      string     `json:"name" yaml:"name,omitempty"`
-	Provider  string     `json:"provider" yaml:"provider,omitempty"`
-	Params    Params     `json:"params" yaml:"params,omitempty"`
+	ID        int64      `json:"id,omitempty" yaml:"id,omitempty"`
+	Name      string     `json:"name,omitempty" yaml:"name,omitempty"`
+	Provider  string     `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Params    Params     `json:"params,omitempty" yaml:"params,omitempty"`
 	ModelInfo *ModelInfo `json:"model_info" yaml:"model_info,omitempty"`
 }
 
-var MODEL_MODES = []string{"embedding", "chat", "multimodal"}
+var MODEL_MODES = Enum{"embedding", "chat", "multimodal"}
 
 func (c *ModelInfo) Validate() error {
 	if c.BaseModel == "" {
 		return fmt.Errorf("base model is required")
 	}
-	if c.Mode != "" && !contains(MODEL_MODES, c.Mode) {
+	if c.Mode != "" && !MODEL_MODES.Contains(c.Mode) {
 		return fmt.Errorf("invalid model mode: %s", c.Mode)
 	}
 	if c.InputCostPerToken != nil && *c.InputCostPerToken < 0.0 {
@@ -57,11 +58,14 @@ func (c *ModelConfig) Validate() error {
 	return nil
 }
 
-func contains(array []string, element string) bool {
-	for _, item := range array {
-		if item == element {
-			return true
-		}
-	}
-	return false
+func (c *ModelConfig) GetModelHandle() string {
+	return c.Name
+}
+
+func (c *ModelConfig) GetID() int64 {
+	return c.ID
+}
+
+func (c *ModelConfig) String() string {
+	return fmt.Sprintf("%s-%d", FormatString(c.Name), c.ID)
 }

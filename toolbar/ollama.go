@@ -110,8 +110,7 @@ func ollama() {
 
 func (t *OllamaTag) GetModelConfig() common.ModelConfig {
 	model := common.ModelConfig{
-		Name:     t.Model,
-		Provider: "ollama",
+		Name: t.Model,
 		ModelInfo: &common.ModelInfo{
 			BaseModel:          t.Model,
 			InputCostPerToken:  new(float64),
@@ -141,7 +140,7 @@ func UpdateProvider() {
 		URL:    "http://localhost:11434",
 		APIKey: "",
 	}
-	// marshall provider to *bytes.Buffer
+	// marshal provider to *bytes.Buffer
 	providerBytes, err := json.Marshal(provider)
 	if err != nil {
 		fmt.Println(err)

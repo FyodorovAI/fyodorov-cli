@@ -21,10 +21,11 @@ func init() {
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage Fyodorov configuration",
+	// Disable persistent pre-run
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		configRun = true
 		initConfig(cmd, args)
-		configRun = false
 	},
 }
 
@@ -40,6 +41,9 @@ var copilotCmd = &cobra.Command{
 var validateTemplateCmd = &cobra.Command{
 	Use:   "validate file [file1 file2 ...]",
 	Short: "Validate a Fyodorov configuration",
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"yaml", "yml"}, cobra.ShellCompDirectiveFilterFileExt
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var wg sync.WaitGroup
 		for _, arg := range args {
@@ -73,7 +77,7 @@ func validateYamlFile(filepath string) {
 	dec := yaml.NewDecoder(bytes.NewReader(fileBytes))
 	dec.KnownFields(true) // ← reject any unknown fields
 	if err := dec.Decode(&cfg); err != nil {
-		fmt.Printf("invalid config: %v", err)
+		fmt.Printf("invalid config %s: %v", filepath, err)
 		return
 	}
 	// Validate the config
