@@ -40,13 +40,11 @@ type Cache struct {
 	Mutex     sync.Mutex
 }
 
-func (cache *Cache) Update() {
+func (cache *Cache) Update(forceUpdate bool) {
 	cache.Mutex.Lock()
 	defer cache.Mutex.Unlock()
 	cache.ReadCacheFromFile()
-	fmt.Printf("%s Cache accessed\n", time.Now())
-	if cache.Resources.IsExpired(v) || NoCache {
-		fmt.Printf("%s Cache expired (or NoCache true: %t)\n", cache.Resources.TimeOfLastCacheUpdate, NoCache)
+	if cache.Resources.IsExpired(v) || NoCache || forceUpdate {
 		cache.Resources = getResources(nil)
 		cache.Resources.TimeOfLastCacheUpdate = time.Now()
 		yamlBytes, err := yaml.Marshal(cache.Resources)
@@ -77,7 +75,7 @@ func (cache *Cache) ReadCacheFromFile() error {
 }
 
 var listResourcesCmd = &cobra.Command{
-	Use:     fmt.Sprintf("list (ls) [resource type: %s]", strings.Join(resourceTypes, "|")),
+	Use:     fmt.Sprintf("list (ls) [resource type:%s]", strings.Join(resourceTypes, "|")),
 	Short:   "List deployed resources for a user",
 	Aliases: []string{"ls"},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -197,14 +195,21 @@ var removeResourcesCmd = &cobra.Command{
 
 		resourceHandles := args[1:]
 		resources := GetResources()
+		resourceIDs := []common.BaseModel{}
 		for _, resourceHandle := range resourceHandles {
 			resourceId := GetResourceIDByString(resources, resourceType, resourceHandle)
 			if resourceId < 1 {
 				fmt.Printf("\033[33mUnable to find resource ID %s.\033[0m\n", resourceHandle)
 				os.Exit(1)
 			}
-			DeleteResource(resourceType, resourceId)
+			resourceIDs = append(
+				resourceIDs,
+				&common.Resource{
+					ID: resourceId,
+				},
+			)
 		}
+		DeleteResources(resourceType, resourceIDs)
 	},
 }
 
@@ -252,6 +257,7 @@ func DeleteResources(resourceType string, resources []common.BaseModel) error {
 	for _, resource := range resources {
 		DeleteResource(resourceType, resource.GetID())
 	}
+	cache.Update(true)
 	return nil
 }
 
@@ -308,7 +314,7 @@ func DeleteResource(resourceType string, resourceId int64) {
 }
 
 func GetResources() *common.FyodorovConfig {
-	cache.Update()
+	cache.Update(false)
 	return cache.Resources
 }
 

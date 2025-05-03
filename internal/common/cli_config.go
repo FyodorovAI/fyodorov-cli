@@ -10,8 +10,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	defaultTTL = 20 * time.Second
+)
+
 // Define a struct to hold the configuration
 type Config struct {
+	Version        string `json:"version"`
 	GagarinURL     string `json:"gagarin_url"`
 	TsiolkovskyURL string `json:"tsiolkovsky_url"`
 	// DostoyevskyURL string `json:"dostoyevsky_url"`
@@ -81,7 +86,7 @@ func GetConfig(config *Config, v *viper.Viper) (*Config, error) {
 		config.Password = v.GetString("password")
 	}
 	if config.TTL == 0 {
-		config.TTL = 5 * time.Minute
+		config.TTL = defaultTTL
 	}
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -97,7 +102,7 @@ func InitViper() *viper.Viper {
 	// v.SetDefault("dostoyevsky-url", "https://dostoyevsky.danielransom.com")
 	v.SetDefault("email", "")
 	v.SetDefault("password", "")
-	v.SetDefault("ttl", 5*time.Minute)
+	v.SetDefault("ttl", defaultTTL)
 
 	// Set the config file name and path
 	v.SetConfigName("config")              // Name of the config file (without extension)

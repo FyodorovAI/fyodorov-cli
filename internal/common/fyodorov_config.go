@@ -36,6 +36,21 @@ type BaseModel interface {
 	Validate() error
 	GetID() int64
 }
+type Resource struct {
+	ID int64 `json:"id,omitempty" yaml:"id,omitempty"`
+}
+
+func (r Resource) String() string {
+	return fmt.Sprintf("resource-%d", r.ID)
+}
+
+func (r Resource) GetID() int64 {
+	return r.ID
+}
+
+func (r Resource) Validate() error {
+	return nil
+}
 
 func FormatString(s string) string {
 	s = strings.TrimSpace(s)
@@ -46,7 +61,7 @@ func FormatString(s string) string {
 }
 
 func CreateFyodorovConfig(v *viper.Viper) *FyodorovConfig {
-	ttl := time.Duration(15)
+	ttl := defaultTTL
 	if v.IsSet("ttl") {
 		ttl = v.GetDuration("ttl")
 	}
@@ -57,7 +72,7 @@ func CreateFyodorovConfig(v *viper.Viper) *FyodorovConfig {
 		Models:                nil,
 		Providers:             nil,
 		Instances:             nil,
-		TimeOfLastCacheUpdate: time.Now().Add(-1 * ttl * time.Minute),
+		TimeOfLastCacheUpdate: time.Now().Add(ttl),
 	}
 }
 
