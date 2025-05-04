@@ -29,7 +29,7 @@ func init() {
 // Fyodorov commands
 var chatCmd = &cobra.Command{
 	Use:   "chat",
-	Short: "Manage Fyodorov configuration",
+	Short: "Chat with an instance of an agent",
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		agents := GetResources().Agents
 		if len(args) == 0 {

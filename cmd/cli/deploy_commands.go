@@ -42,6 +42,7 @@ var deployTemplateCmd = &cobra.Command{
 				deployYamlFile(arg)
 			}(arg)
 		}
+		cache.Update(true)
 		wg.Wait()
 	},
 }
@@ -82,6 +83,9 @@ func deployYamlFile(filepath string) {
 			return
 		}
 		client, err := api.NewAPIClient(v, "")
+		if err != nil {
+			return
+		}
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println("\033[33mError authenticating during deploy:\033[0m", err)
@@ -110,28 +114,6 @@ func deployYamlFile(filepath string) {
 		// Print deployed config
 		fmt.Printf("\033[36mDeployed config %s\033[0m\n", filepath)
 	}
-}
-
-func checkIfAgentPresent(agentID int64, agents []common.AgentClient) bool {
-	for _, agent := range agents {
-		if agent.ID == agentID {
-			return true
-		}
-	}
-	return false
-}
-
-func getInstanceForAgent(agentID int64, instances []InstanceResponse) []common.InstanceClient {
-	res := make([]common.InstanceClient, 0)
-	for _, instance := range instances {
-		if instance.AgentID == agentID {
-			res = append(res, common.InstanceClient{
-				ID:   instance.ID,
-				Name: instance.Title,
-			})
-		}
-	}
-	return res
 }
 
 type DatabaseMetadata struct {
