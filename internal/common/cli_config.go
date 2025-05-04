@@ -12,6 +12,7 @@ import (
 
 var (
 	defaultTTL = 20 * time.Second
+	JWT_TTL    = 20 * time.Minute
 )
 
 // Define a struct to hold the configuration
@@ -20,9 +21,11 @@ type Config struct {
 	GagarinURL     string `json:"gagarin_url"`
 	TsiolkovskyURL string `json:"tsiolkovsky_url"`
 	// DostoyevskyURL string `json:"dostoyevsky_url"`
-	Email    string        `json:"email"`
-	Password string        `json:"password"`
-	TTL      time.Duration `json:"ttl"`
+	Email               string        `json:"email"`
+	Password            string        `json:"password"`
+	CacheTTL            time.Duration `json:"ttl"`
+	JWT                 string        `json:"jwt"`
+	TimeOfLastJWTUpdate time.Time     `json:"time_of_last_jwt_update"`
 }
 
 type AgentClient struct {
@@ -34,6 +37,19 @@ type AgentClient struct {
 type InstanceClient struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
+}
+
+func (c *Config) JWTExpired() bool {
+	if c.JWT != "" && time.Since(c.TimeOfLastJWTUpdate) > JWT_TTL {
+		return false
+	}
+	return true
+}
+
+func (c *Config) SetJWT(jwt string) error {
+	c.JWT = jwt
+	c.TimeOfLastJWTUpdate = time.Now()
+	return SaveConfig(c, GetConfigPath())
 }
 
 func (c *Config) Validate() error {
@@ -85,10 +101,15 @@ func GetConfig(config *Config, v *viper.Viper) (*Config, error) {
 	if config.Password == "" {
 		config.Password = v.GetString("password")
 	}
-	if config.TTL == 0 {
-		config.TTL = defaultTTL
+	if config.CacheTTL == 0 {
+		config.CacheTTL = defaultTTL
 	}
 	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+	err := config.Validate()
+	if err != nil {
+		fmt.Printf("Error validating config: %v\n", err)
 		return nil, err
 	}
 	return config, nil

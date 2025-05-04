@@ -130,16 +130,8 @@ func initConfig(cmd *cobra.Command, args []string) {
 		)
 	}
 
-	// Init config
-	config, err := common.GetConfig(nil, v)
-	if err != nil {
-		fmt.Printf("\033[0;31mError getting config:\033[0m %v\n", err)
-		return
-	}
-	config.Validate()
-
 	// Initialize API client
-	client := api.NewAPIClient(config, "")
+	client, err := api.NewAPIClient(v, "")
 
 	// Authenticate
 	err = client.Authenticate()

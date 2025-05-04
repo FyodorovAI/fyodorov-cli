@@ -27,7 +27,18 @@ type APIClient struct {
 	AuthToken string
 }
 
-func NewAPIClient(config *common.Config, baseURL string) *APIClient {
+func NewAPIClient(v *viper.Viper, baseURL string) (*APIClient, error) {
+	config, err := common.GetConfig(nil, v)
+	if err != nil {
+		fmt.Printf("Error getting config: %v\n", err)
+		return nil, err
+	}
+	var client APIClient
+	if config.JWT != "" {
+		if !config.JWTExpired() {
+			client.AuthToken = config.JWT
+		}
+	}
 	var host string
 	// if config.DostoyevskyURL != "" {
 	// 	host = config.DostoyevskyURL
@@ -41,11 +52,10 @@ func NewAPIClient(config *common.Config, baseURL string) *APIClient {
 	if baseURL != "" {
 		host = baseURL
 	}
-	return &APIClient{
-		BaseURL:  host,
-		Email:    config.Email,
-		Password: config.Password,
-	}
+	client.BaseURL = host
+	client.Email = config.Email
+	client.Password = config.Password
+	return &client, nil
 }
 
 // Authenticate method for API client
@@ -55,6 +65,7 @@ func (c *APIClient) Authenticate() error {
 	json.NewEncoder(body).Encode(map[string]string{"email": c.Email, "password": c.Password})
 	responseBody, err := c.CallAPI("POST", "/users/sign_in", body)
 	if err != nil {
+		fmt.Printf("\033[0;31mError authenticating (POST %s/users/sign_in):\033[0m +%v\n", c.BaseURL, err.Error())
 		return err
 	}
 	var response struct {

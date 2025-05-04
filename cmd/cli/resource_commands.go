@@ -263,19 +263,15 @@ func DeleteResources(resourceType string, resources []common.BaseModel) error {
 
 func DeleteResource(resourceType string, resourceId int64) {
 	var client *api.APIClient
-	config, err := common.GetConfig(nil, v)
-	if err != nil {
-		fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
-		return
-	}
+	var err error
 	if resourceType == "tools" {
 		if !v.IsSet("tsiolkovsky-url") {
 			fmt.Println("\033[33mTsiolkovsky URL is not set in config\033[0m")
 			return
 		}
-		client = api.NewAPIClient(config, v.GetString("tsiolkovsky-url"))
+		client, err = api.NewAPIClient(viper.GetViper(), v.GetString("tsiolkovsky-url"))
 	} else {
-		client = api.NewAPIClient(config, v.GetString("gagarin-url"))
+		client, err = api.NewAPIClient(v, v.GetString("gagarin-url"))
 	}
 	err = client.Authenticate()
 	if err != nil {
@@ -319,12 +315,7 @@ func GetResources() *common.FyodorovConfig {
 }
 
 func getResources(resourceType *string) *common.FyodorovConfig {
-	config, err := common.GetConfig(nil, v)
-	if err != nil {
-		fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
-		os.Exit(1)
-	}
-	client := api.NewAPIClient(config, v.GetString("gagarin-url"))
+	client, err := api.NewAPIClient(v, "")
 	err = client.Authenticate()
 	if err != nil {
 		fmt.Println(err)

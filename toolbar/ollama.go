@@ -148,11 +148,11 @@ func UpdateProvider() {
 	}
 	var providerBuffer bytes.Buffer
 	providerBuffer.Write(providerBytes)
-	config, err := common.GetConfig(nil, v)
+	client, err := api.NewAPIClient(v, "")
 	if err != nil {
-		fmt.Println("No config file found")
+		fmt.Printf("\033[0;31mError creating API client:\033[0m +%v\n", err.Error())
+		return
 	}
-	client := api.NewAPIClient(config, config.GagarinURL)
 	err = client.Authenticate()
 	if err != nil {
 		fmt.Println(err)
@@ -174,11 +174,11 @@ func UpdateProvider() {
 }
 
 func UpdateModel(model common.ModelConfig) {
-	config, err := common.GetConfig(nil, v)
+	client, err := api.NewAPIClient(v, "")
 	if err != nil {
-		fmt.Println("No config file found")
+		fmt.Println("Error creating API client:", err)
+		return
 	}
-	client := api.NewAPIClient(config, config.GagarinURL)
 	err = client.Authenticate()
 	if err != nil {
 		fmt.Println("Error authenticating during model update:", err)

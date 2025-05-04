@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/FyodorovAI/fyodorov-cli-tool/internal/api-client"
-	"github.com/FyodorovAI/fyodorov-cli-tool/internal/common"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 )
@@ -71,16 +70,12 @@ var authCmd = &cobra.Command{
 				}
 				var jsonBuffer bytes.Buffer
 				jsonBuffer.Write(jsonBytes)
-				config, err := common.GetConfig(&common.Config{
-					Email:    req.Email,
-					Password: req.Password,
-				}, v)
+				// call API
+				client, err := api.NewAPIClient(v, "")
 				if err != nil {
-					fmt.Printf("Error getting config: %v\n", err)
+					fmt.Println("Error creating API client:", err)
 					return
 				}
-				// call API
-				client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 				res, err := client.CallAPI("POST", "/users/sign_up", &jsonBuffer)
 				if err != nil {
 					fmt.Printf("Error signing up: %v\n", err)
@@ -112,11 +107,11 @@ var authCmd = &cobra.Command{
 					return
 				}
 				v.Set("password", strings.TrimSpace(string(passBytes)))
-				config, err := common.GetConfig(nil, v)
+				client, err := api.NewAPIClient(v, "")
 				if err != nil {
-					fmt.Printf("\033[0;31mError getting config:\033[0m +%v\n", err)
+					fmt.Printf("\033[0;31mError creating API client:\033[0m +%v\n", err.Error())
+					return
 				}
-				client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 				err = client.Authenticate()
 				if err != nil {
 					fmt.Printf("\033[0;31mError authenticating:\033[0m +%v\n", err.Error())
@@ -129,11 +124,11 @@ var authCmd = &cobra.Command{
 				}
 			}
 		}
-		config, err := common.GetConfig(nil, v)
+		client, err := api.NewAPIClient(v, "")
 		if err != nil {
-			fmt.Printf("\033[0;31mError getting config:\033[0m +%v\n", err)
+			fmt.Printf("\033[0;31mError creating API client:\033[0m +%v\n", err.Error())
+			return
 		}
-		client := api.NewAPIClient(config, v.GetString("gagarin-url"))
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)

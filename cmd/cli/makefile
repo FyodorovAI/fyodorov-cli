@@ -16,7 +16,7 @@ build-unix-amd64:
 build-windows:
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -o $(TARGET_WINDOWS) .
 
-build: build-mac build-windows build-unix-amd64
+build: build-mac build-unix-amd64 # build-windows
 
 # Clean target
 clean:

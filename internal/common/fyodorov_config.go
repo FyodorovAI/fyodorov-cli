@@ -82,7 +82,7 @@ func (c *FyodorovConfig) IsExpired(v *viper.Viper) bool {
 		fmt.Printf("Error getting config: %v\n", err)
 		return true
 	}
-	return time.Since(c.TimeOfLastCacheUpdate) > config.TTL
+	return time.Since(c.TimeOfLastCacheUpdate) > config.CacheTTL
 }
 
 func (config *FyodorovConfig) Validate() error {

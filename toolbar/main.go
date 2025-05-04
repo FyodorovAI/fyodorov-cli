@@ -61,17 +61,14 @@ func onReady() {
 }
 
 func authenticate() {
-	config, err := common.GetConfig(nil, v)
-	if err != nil {
-		fmt.Println("No config file found")
-	}
-	fmt.Println("Found config file")
-
-	if config != nil && config.Email != "" && config.Password != "" {
-		client := api.NewAPIClient(config, config.GagarinURL)
+	if v.IsSet("email") && v.IsSet("password") {
+		client, err := api.NewAPIClient(v, "")
+		if err != nil {
+			fmt.Println("Error creating API client:", err)
+			return
+		}
 		err = client.Authenticate()
 		if err != nil {
-			fmt.Println("Error authenticating:", err)
 			return
 		} else {
 			fmt.Println("Authenticated successfully")

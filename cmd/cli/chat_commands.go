@@ -64,12 +64,7 @@ var chatCmd = &cobra.Command{
 			input, _ := reader.ReadString('\n')
 			v.Set("gagarin-url", strings.TrimSpace(input))
 		}
-		config, err := common.GetConfig(nil, v)
-		if err != nil {
-			fmt.Printf("\033[33mError getting config: %v\n\033[0m", err)
-			return
-		}
-		client := api.NewAPIClient(config, v.GetString("gagarin-url"))
+		client, err := api.NewAPIClient(v, "")
 		err = client.Authenticate()
 		if err != nil {
 			fmt.Println(err)
