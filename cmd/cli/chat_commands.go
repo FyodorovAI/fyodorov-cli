@@ -81,7 +81,6 @@ var chatCmd = &cobra.Command{
 		instances := GetResources().Instances
 		for _, agentTmp := range agents {
 			if agentTmp.Name == agentName {
-				fmt.Printf("Agent name (%s): %+v\n", agentTmp.Name, instances)
 				agent = agentTmp
 				break
 			}
@@ -100,7 +99,38 @@ var chatCmd = &cobra.Command{
 		// @TODO: add a flag for specifying the instance name
 		if len(instances) == 0 {
 			fmt.Println("No instances found for that agent")
-			return
+			client, err := api.NewAPIClient(v, "")
+			if err != nil {
+				fmt.Printf("\033[33mError creating API client:\033[0m +%v\n", err.Error())
+				return
+			}
+			err = client.Authenticate()
+			if err != nil {
+				fmt.Printf("\033[33mError authenticating:\033[0m %v\n", err.Error())
+				return
+			}
+			instance := common.Instance{
+				AgentId: agent.ID,
+				Title:   fmt.Sprintf("Default Instance (%d)", agent.ID),
+			}
+			jsonBytes, err := json.Marshal(instance)
+			if err != nil {
+				fmt.Printf("\033[33mError marshaling instance to JSON:\033[0m %v\n", err.Error())
+				return
+			}
+			res, err := client.CallAPI("POST", "/instances", bytes.NewBuffer(jsonBytes))
+			if err != nil {
+				fmt.Printf("\033[33mError creating instance:\033[0m %v\n", err.Error())
+				return
+			}
+			defer res.Close()
+			fmt.Printf("\033[36mCreated instance\033[0m\n")
+			err = json.NewDecoder(res).Decode(&instance)
+			if err != nil {
+				fmt.Printf("\033[33mError decoding response:\033[0m %v\n", err.Error())
+				return
+			}
+			instances = append(instances, instance)
 		}
 		instance := instances[0]
 		instanceName := instance.Title
@@ -145,7 +175,6 @@ func GetAgentInstances(instances []common.Instance, agentID int64) []common.Inst
 			instanceClients = append(instanceClients, instanceClient)
 		}
 	}
-	fmt.Printf("Found instances for agent %d: %+v\n", agentID, instanceClients)
 	return instanceClients
 }
 
