@@ -12,13 +12,13 @@ import (
 var DEFAULT_VERSION = "0.0.1"
 
 type FyodorovConfig struct {
-	Version               string        `json:"version" yaml:"version,omitempty"`
+	Version               *string       `json:"version" yaml:"version,omitempty"`
 	Providers             []Provider    `json:"providers,omitempty" yaml:"providers,omitempty"`
 	Models                []ModelConfig `json:"models,omitempty" yaml:"models,omitempty"`
 	Agents                []Agent       `json:"agents,omitempty" yaml:"agents,omitempty"`
 	Tools                 []MCPTool     `json:"tools,omitempty" yaml:"tools,omitempty"`
 	Instances             []Instance    `json:"instances,omitempty" yaml:"instances,omitempty"`
-	TimeOfLastCacheUpdate time.Time     `json:"time_of_last_cache_update,omitempty" yaml:"time_of_last_cache_update,omitempty"`
+	TimeOfLastCacheUpdate *time.Time    `json:"time_of_last_cache_update,omitempty" yaml:"time_of_last_cache_update,omitempty"`
 }
 
 type Instance struct {
@@ -65,15 +65,17 @@ func CreateFyodorovConfig(v *viper.Viper) *FyodorovConfig {
 	if v.IsSet("ttl") {
 		ttl = v.GetDuration("ttl")
 	}
-	return &FyodorovConfig{
-		Version:               DEFAULT_VERSION,
-		Agents:                nil,
-		Tools:                 nil,
-		Models:                nil,
-		Providers:             nil,
-		Instances:             nil,
-		TimeOfLastCacheUpdate: time.Now().Add(ttl),
+	config := &FyodorovConfig{
+		Version:   &DEFAULT_VERSION,
+		Agents:    nil,
+		Tools:     nil,
+		Models:    nil,
+		Providers: nil,
+		Instances: nil,
 	}
+	t := time.Now().Add(ttl)
+	config.TimeOfLastCacheUpdate = &t
+	return config
 }
 
 func (c *FyodorovConfig) IsExpired(v *viper.Viper) bool {
@@ -82,13 +84,13 @@ func (c *FyodorovConfig) IsExpired(v *viper.Viper) bool {
 		fmt.Printf("Error getting config: %v\n", err)
 		return true
 	}
-	return time.Since(c.TimeOfLastCacheUpdate) > config.CacheTTL
+	return time.Since(*c.TimeOfLastCacheUpdate) > config.CacheTTL
 }
 
 func (config *FyodorovConfig) Validate() error {
-	if config.Version != "" {
+	if config.Version != nil && *config.Version != "" {
 		// check if version is in valid semver format
-		if _, err := semver.NewVersion(config.Version); err != nil {
+		if _, err := semver.NewVersion(*config.Version); err != nil {
 			return err
 		}
 	}

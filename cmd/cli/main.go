@@ -59,6 +59,7 @@ func main() {
 }
 
 func initConfig(cmd *cobra.Command, args []string) {
+	fmt.Println("CLI Version", version)
 	configRun := cmd.Use == "config"
 	reader := bufio.NewReader(os.Stdin)
 

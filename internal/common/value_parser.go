@@ -29,7 +29,7 @@ func (config *FyodorovConfig) parseKey(key, value string) {
 		firstKey, remainingKeys := parseComplexKey(keys)
 		switch firstKey {
 		case "version":
-			config.Version = value
+			config.Version = &value
 			fmt.Print("Using fyodorov version: ", config.Version, "\n")
 		case "providers":
 			config.parseProviderKey(remainingKeys, value)

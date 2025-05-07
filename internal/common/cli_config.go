@@ -124,6 +124,9 @@ func InitViper() *viper.Viper {
 	v.SetDefault("email", "")
 	v.SetDefault("password", "")
 	v.SetDefault("ttl", defaultTTL)
+	v.SetDefault("jwt", "")
+	v.SetDefault("jwt_ttl", JWT_TTL)
+	v.SetDefault("time_of_last_jwt_update", time.Now().Add(-1*JWT_TTL))
 
 	// Set the config file name and path
 	v.SetConfigName("config")              // Name of the config file (without extension)

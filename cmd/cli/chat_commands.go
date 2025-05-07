@@ -124,7 +124,7 @@ var chatCmd = &cobra.Command{
 				return
 			}
 			defer res.Close()
-			fmt.Printf("\033[36mCreated instance\033[0m\n")
+			fmt.Printf("\033[36mCreated instance (%s)\033[0m\n", instance.Title)
 			err = json.NewDecoder(res).Decode(&instance)
 			if err != nil {
 				fmt.Printf("\033[33mError decoding response:\033[0m %v\n", err.Error())

@@ -46,7 +46,8 @@ func (cache *Cache) Update(forceUpdate bool) {
 	cache.ReadCacheFromFile()
 	if cache.Resources.IsExpired(v) || NoCache || forceUpdate {
 		cache.Resources = getResources(nil)
-		cache.Resources.TimeOfLastCacheUpdate = time.Now()
+		t := time.Now()
+		cache.Resources.TimeOfLastCacheUpdate = &t
 		yamlBytes, err := yaml.Marshal(cache.Resources)
 		if err != nil {
 			fmt.Printf("Error marshaling fyodorov config to yaml for cache: %v\n", err)
@@ -118,6 +119,8 @@ var listResourcesCmd = &cobra.Command{
 				fmt.Printf("%s\n", string(bytes))
 			}
 		} else {
+			resources.TimeOfLastCacheUpdate = nil
+			resources.Version = nil
 			bytes, err = yaml.Marshal(resources)
 			if err != nil {
 				fmt.Printf("\033[33mError marshaling fyodorov config to yaml: %v\n\033[0m", err)
@@ -200,7 +203,7 @@ var removeResourcesCmd = &cobra.Command{
 			resourceId := GetResourceIDByString(resources, resourceType, resourceHandle)
 			if resourceId < 1 {
 				fmt.Printf("\033[33mUnable to find resource ID %s.\033[0m\n", resourceHandle)
-				os.Exit(1)
+				continue
 			}
 			resourceIDs = append(
 				resourceIDs,
@@ -269,7 +272,7 @@ func DeleteResource(resourceType string, resourceId int64) {
 			fmt.Println("\033[33mTsiolkovsky URL is not set in config\033[0m")
 			return
 		}
-		client, err = api.NewAPIClient(viper.GetViper(), v.GetString("tsiolkovsky-url"))
+		client, err = api.NewAPIClient(v, v.GetString("tsiolkovsky-url"))
 	} else {
 		client, err = api.NewAPIClient(v, v.GetString("gagarin-url"))
 	}
@@ -316,6 +319,11 @@ func GetResources() *common.FyodorovConfig {
 
 func getResources(resourceType *string) *common.FyodorovConfig {
 	client, err := api.NewAPIClient(v, "")
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("\033[33mUnable to create API client\033[0m")
+		os.Exit(1)
+	}
 	err = client.Authenticate()
 	if err != nil {
 		fmt.Println(err)

@@ -25,12 +25,13 @@ type APIClient struct {
 	Email     string
 	Password  string
 	AuthToken string
+	Viper     *viper.Viper
 }
 
 func NewAPIClient(v *viper.Viper, baseURL string) (*APIClient, error) {
 	config, err := common.GetConfig(nil, v)
 	if err != nil {
-		fmt.Printf("Error getting config: %v\n", err)
+		fmt.Printf("Error getting config: %v\n%v\n", err, config)
 		return nil, err
 	}
 	var client APIClient
@@ -55,17 +56,22 @@ func NewAPIClient(v *viper.Viper, baseURL string) (*APIClient, error) {
 	client.BaseURL = host
 	client.Email = config.Email
 	client.Password = config.Password
+	client.Viper = v
 	return &client, nil
 }
 
 // Authenticate method for API client
-func (c *APIClient) Authenticate() error {
+func (client *APIClient) Authenticate() error {
+	if client.Viper.IsSet("jwt") && client.Viper.GetTime("time_of_last_jwt_update").Add(client.Viper.GetDuration("jwt_ttl")).After(time.Now()) {
+		client.AuthToken = client.Viper.GetString("jwt")
+		return nil
+	}
 	// Implement authentication with the API to obtain AuthToken
 	body := bytes.NewBuffer([]byte{})
-	json.NewEncoder(body).Encode(map[string]string{"email": c.Email, "password": c.Password})
-	responseBody, err := c.CallAPI("POST", "/users/sign_in", body)
+	json.NewEncoder(body).Encode(map[string]string{"email": client.Email, "password": client.Password})
+	responseBody, err := client.CallAPI("POST", "/users/sign_in", body)
 	if err != nil {
-		fmt.Printf("\033[0;31mError authenticating (POST %s/users/sign_in):\033[0m +%v\n", c.BaseURL, err.Error())
+		fmt.Printf("\033[0;31mError authenticating (POST %s/users/sign_in):\033[0m +%v\n", client.BaseURL, err.Error())
 		return err
 	}
 	var response struct {
@@ -77,7 +83,13 @@ func (c *APIClient) Authenticate() error {
 		return err
 	}
 	// fmt.Println(response.Message)
-	c.AuthToken = response.JWT
+	client.AuthToken = response.JWT
+	client.Viper.Set("jwt", response.JWT)
+	client.Viper.Set("time_of_last_jwt_update", time.Now())
+	err = client.Viper.WriteConfig()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
