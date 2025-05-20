@@ -59,7 +59,7 @@ func main() {
 }
 
 func initConfig(cmd *cobra.Command, args []string) {
-	fmt.Println("CLI Version", version)
+	fmt.Println("CLI Version:", version)
 	configRun := cmd.Use == "config"
 	reader := bufio.NewReader(os.Stdin)
 
@@ -133,6 +133,10 @@ func initConfig(cmd *cobra.Command, args []string) {
 
 	// Initialize API client
 	client, err := api.NewAPIClient(v, "")
+	if err != nil {
+		fmt.Printf("\033[0;31mError creating API client:\033[0m %v\n", err)
+		return
+	}
 
 	// Authenticate
 	err = client.Authenticate()

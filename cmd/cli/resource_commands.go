@@ -202,7 +202,7 @@ var removeResourcesCmd = &cobra.Command{
 		for _, resourceHandle := range resourceHandles {
 			resourceId := GetResourceIDByString(resources, resourceType, resourceHandle)
 			if resourceId < 1 {
-				fmt.Printf("\033[33mUnable to find resource ID %s.\033[0m\n", resourceHandle)
+				fmt.Printf("\033[33mUnable to find resource %s.\033[0m\n", resourceHandle)
 				continue
 			}
 			resourceIDs = append(

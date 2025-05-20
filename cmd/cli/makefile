@@ -6,7 +6,7 @@ GOFLAGS := -ldflags="-s -w"
 TARGET_UNIX := fyodorov
 TARGET_WINDOWS := fyodorov.exe
 
-VERSION := 0.4.7
+VERSION := 0.4.8
 
 # Build targets
 build-mac:
